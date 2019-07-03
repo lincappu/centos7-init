@@ -7,23 +7,25 @@
 #  Changelog:
 #################################################
 # set hostname 
-choice='y'
-while(("$choice" == 'y' || "$choice" == 'Y'))
-do
-  read -p "Please input mechine hostname:" nodename
-  read -p "You set hostname : $nodename，are you sure [y/n]:" choice
-  if [[ "$choice" == "y" ||   "$choice" == "Y" ||  "$choice" == "N" || "$choice" == "n" ]]
-  then
-    if [[ "$choice" == "y" ||  "$choice" == "Y" ]] 
+set_hostname(){
+  choice='y'
+  while(("$choice" == 'y' || "$choice" == 'Y'))
+  do
+    read -p "Please input mechine hostname:" nodename
+    read -p "You set hostname : $nodename，are you sure [y/n]:" choice
+    if [[ "$choice" == "y" ||   "$choice" == "Y" ||  "$choice" == "N" || "$choice" == "n" ]]
     then
-      hostnamectl set-hostname $nodename
-      break
+      if [[ "$choice" == "y" ||  "$choice" == "Y" ]] 
+      then
+        hostnamectl set-hostname $nodename
+        break
+      fi
+    else
+      echo "you input error, exit"
+      exit 0
     fi
-  else
-    echo "you input error, exit"
-    exit 0
-  fi
-done
+  done
+}
 
 
 # Check if user is root
