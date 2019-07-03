@@ -261,9 +261,25 @@ maven(){
 
 
 main(){
-  
-  java
-  maven
+  set_hostname
+  update_kernel
+  ntpdate
+  add_google_dns
+#  public_dns
+  add_user_and_sshkey
+  disable_selinux
+  history
+#  i18n
+#  chattr 
+  stop_service
+  add_yum_repo
+#  sshd_config
+  disable_ipv6
+  install_package
+  set_limits
+  kernel_parameter
+  install_java
+  install_maven
 
 }
 
