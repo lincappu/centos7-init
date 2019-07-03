@@ -221,7 +221,7 @@ EOF
 
 
 ##### install java 
-java(){
+install_java(){
   yum remove -y java  &> /dev/null
   tar zxf  jdk-8u161-linux-x64.tar.gz   -C    /opt
   sleep 5
@@ -243,7 +243,7 @@ java(){
 }
 
 ## install maven 
-maven(){
+install_maven(){
   tar zxf  apache-maven-3.5.3-bin.tar.gz  -C  /opt
   sleep 5
   cd /opt
