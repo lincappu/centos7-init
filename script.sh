@@ -1,10 +1,10 @@
 #!/bin/bash
 #################################################
-#  --Info  Initialization CentOS 7.x script
+#  Initialization CentOS 7.x script
 #################################################
-#   Auther: FANLIUSONG
-#   Init_data: 20190702
-#   Changelog:
+#  Auther: FANLIUSONG
+#  Init_data: 20190702
+#  Changelog:
 #################################################
 # set hostname 
 choice='y'
