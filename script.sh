@@ -5,6 +5,7 @@
 #  Auther: FANLIUSONG
 #  Init_data: 20190702
 #  Changelog:
+#  1.add hosts
 #################################################
 # set hostname 
 set_hostname(){
@@ -26,6 +27,21 @@ set_hostname(){
     fi
   done
 }
+
+# add hosts
+add_hosts(){
+cat << EOF > /etc/hosts
+127.0.0.1       localhost       localhost.localdomain   localhost4      localhost4.localdomain4
+::1     localhost       localhost.localdomain   localhost6      localhost6.localdomain6
+192.168.100.69 master1
+192.168.100.67 master2
+192.168.100.68 master3
+192.168.100.63 work1
+192.168.100.62 work2
+EOF
+}
+
+
 
 
 # Check if user is root
@@ -49,6 +65,8 @@ update_kernel(){
   grub2-set-default 0
   grub2-mkconfig -o /boot/grub2/grub.cfg
  }
+
+
 
 
 #  NTP update
@@ -264,6 +282,7 @@ install_maven(){
 
 main(){
   set_hostname
+#  add_hosts
   update_kernel
   ntpdate
   add_google_dns
