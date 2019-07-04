@@ -145,6 +145,8 @@ chattr +ai /etc/inittab
 stop_service(){
   systemctl stop NetworkManager
   systemctl diable NetworkManager
+  systemctl stop dnsmasq
+  systemctl disable dnsmasq
 }
 
 # add yum repo
