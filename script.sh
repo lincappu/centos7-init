@@ -177,7 +177,7 @@ disable_ipv6(){
 
 # install basic command 
 install_yum(){
-yum install -y  vim wget openssl-devel ntpdate make gcc-c++  ncurses-devel net-snmp sysstat lrzsz zip unzip tree net-tools telnet screen gd 
+yum install -y  vim wget openssl-devel ntpdate make gcc-c++  ncurses-devel net-snmp sysstat lrzsz zip unzip tree net-tools telnet screen gd asciinema 
 yum groupinstall -y "development tools"  "Server Platform Development" 
 }
 
