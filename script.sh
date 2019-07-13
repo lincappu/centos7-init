@@ -7,6 +7,8 @@
 #  Changelog:
 #  1.add hosts
 #################################################
+ips=192.168.100.69 192.168.100.68 192.168.100.67 
+
 # set hostname 
 set_hostname(){
   choice='y'
@@ -26,6 +28,26 @@ set_hostname(){
       exit 0
     fi
   done
+  
+  net_ip=$(ifconfig eth0   |  grep  "inet" | awk '{print $2}')  
+  echo "$net_ip $nodename" >> /etc/hosts
+}
+
+# add user fanliusong and set root and fanliusong ssh-key
+add_user_fanliusong(){
+  useradd fanliusong   &> /dev/null
+  echo "yJNDSDcUjIDADJHe" |  passwd  fanliusong --stdin  &> /dev/null
+  echo "fanliusong  ALL=(ALL)  NOPASSWD:ALL" > /etc/sudoers.d/fanliusong
+  format 
+
+  ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa
+  su - fanliusong
+  ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa
+  format 
+  for ip in ips
+  do 
+    ssh-copy-id root@ip
+  done
 }
 
 # add hosts
@@ -40,8 +62,6 @@ cat << EOF > /etc/hosts
 192.168.100.62 work2
 EOF
 }
-
-
 
 
 # Check if user is root
@@ -87,19 +107,6 @@ public_dns(){
   echo  "nameserver  114.114.114.114" >> /etc/resolv.conf
   echo  "nameserver  223.5.5.5" >> /etc/resolv.conf
   echo  "nameserver  8.8.8.8" >> /etc/resolv.conf
-}
-
-# add user fanliusong and set root and fanliusong ssh-key
-add_user_fanliusong(){
-  useradd fanliusong   &> /dev/null
-  echo "yJNDSDcUjIDADJHe" |  passwd  fanliusong --stdin  &> /dev/null
-  echo "fanliusong  ALL=(ALL)  NOPASSWD:ALL" > /etc/sudoers.d/fanliusong
-  format 
-
-  ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa
-  su - fanliusong
-  ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa
-  format 
 }
 
 
