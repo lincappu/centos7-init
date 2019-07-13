@@ -75,9 +75,10 @@ ntpdate(){
   hwclock -w
 }
 
-# add google dns
+# add 114 dns
 add_google_dns(){
-echo  "nameserver  8.8.8.8" >> /etc/resolv.conf
+echo  "nameserver 114.114.114.114" >> /etc/resolv.conf
+echo 'echo  "nameserver 114.114.114.114" >> /etc/resolv.conf'  >> /etc/profile
 }
 
 # add public dns
@@ -287,7 +288,7 @@ main(){
 #  add_hosts
   update_kernel
   ntpdate
-  add_google_dns
+  add_114_dns
 #  public_dns
   add_user_and_sshkey
   disable_selinux
