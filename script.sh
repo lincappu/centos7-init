@@ -9,6 +9,21 @@
 #################################################
 ips=192.168.100.69 192.168.100.68 192.168.100.67 
 
+# add yum repo
+add_yum_repo(){
+  yum install epel-release -y 
+  yum clean all 
+  yum makecache
+  yum update -y
+}
+
+# install basic command 
+install_yum(){
+yum install -y  epel-release vim wget openssl-devel ntpdate make gcc-c++  ncurses-devel net-snmp sysstat lrzsz zip unzip tree net-tools telnet screen gd asciinema sshpass  
+yum groupinstall -y "development tools"  "Server Platform Development" 
+}
+
+
 # set hostname 
 set_hostname(){
   choice='y'
@@ -157,13 +172,7 @@ stop_service(){
   systemctl disable dnsmasq
 }
 
-# add yum repo
-add_yum_repo(){
-  yum install epel-release -y 
-  yum clean all 
-  yum makecache
-  yum update -y
-}
+
 
 # set ssh  config
 sshd_config(){
@@ -183,11 +192,6 @@ disable_ipv6(){
 }
 
 
-# install basic command 
-install_yum(){
-yum install -y  vim wget openssl-devel ntpdate make gcc-c++  ncurses-devel net-snmp sysstat lrzsz zip unzip tree net-tools telnet screen gd asciinema 
-yum groupinstall -y "development tools"  "Server Platform Development" 
-}
 
 # set system limits
 set_limits(){
@@ -291,6 +295,8 @@ install_maven(){
 
 
 main(){
+  add_yum_repo
+  install_yum
   set_hostname
 #  add_hosts
   update_kernel
@@ -303,7 +309,6 @@ main(){
 #  i18n
 #  chattr 
   stop_service
-  add_yum_repo
 #  sshd_config
   disable_ipv6
   install_package
