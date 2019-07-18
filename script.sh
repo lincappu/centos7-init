@@ -7,7 +7,7 @@
 #  Changelog:
 #  1.add hosts
 #################################################
-ips=192.168.100.69 192.168.100.68 192.168.100.67 
+ips=172.16.82.81 172.16.82.82 172.16.82.83 172.16.82.101 172.16.82.102 172.16.82.103 172.16.82.104 172.16.82.105
 
 # add yum repo
 add_yum_repo(){
@@ -58,11 +58,12 @@ add_user_fanliusong(){
   ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa
   su - fanliusong
   ssh-keygen -t rsa -P "" -f ~/.ssh/id_rsa
+  exit 
   format 
-  for ip in ips
-  do 
-    ssh-copy-id root@ip
-  done
+#  for ip in ips
+#  do 
+#    ssh-copy-id root@ip
+#  done
 }
 
 # add hosts
@@ -70,11 +71,14 @@ add_hosts(){
 cat << EOF > /etc/hosts
 127.0.0.1       localhost       localhost.localdomain   localhost4      localhost4.localdomain4
 ::1     localhost       localhost.localdomain   localhost6      localhost6.localdomain6
-192.168.100.69 master1
-192.168.100.67 master2
-192.168.100.68 master3
-192.168.100.63 work1
-192.168.100.62 work2
+172.16.82.81 master1
+172.16.82.82 master2
+172.16.82.83 master3
+172.16.82.101 node1
+172.16.82.102 node2
+172.16.82.103 node3
+172.16.82.104 node4
+172.16.82.105 node5
 EOF
 }
 
@@ -102,8 +106,6 @@ update_kernel(){
  }
 
 
-
-
 #  NTP update
 ntpdate(){
   echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
@@ -111,9 +113,8 @@ ntpdate(){
 }
 
 # add 114 dns
-add_google_dns(){
-echo  "nameserver 114.114.114.114" >> /etc/resolv.conf
-echo 'echo  "nameserver 114.114.114.114" >> /etc/resolv.conf'  >> /etc/profile
+add_114_dns(){
+ echo  "nameserver 114.114.114.114" >> /etc/resolv.conf
 }
 
 # add public dns
@@ -137,17 +138,17 @@ disable_firewalld(){
 # set history format
 history(){
   cat > /etc/profile.d/system-audit.sh << EOF
-  HISTFILESIZE=20000            
-  HISTSIZE=20000
-  USER_IP=`who -u am i 2>/dev/null| awk '{print $NF}'|sed -e 's/[()]//g'` 
-  if [ -z $USER_IP ]
-  then
-    USER_IP=`hostname`
-  fi
-  HISTTIMEFORMAT="%F %T $USER_IP:`whoami` "     
-  export HISTTIMEFORMAT
-  EOF
-  source  /etc/profile.d/system-audit.sh
+HISTFILESIZE=20000            
+HISTSIZE=20000
+USER_IP=`who -u am i 2>/dev/null| awk '{print $NF}'|sed -e 's/[()]//g'` 
+if [ -z $USER_IP ]
+then
+  USER_IP=`hostname`
+fi
+HISTTIMEFORMAT="%F %T $USER_IP:`whoami` "     
+export HISTTIMEFORMAT
+EOF
+source  /etc/profile.d/system-audit.sh
 }
 
 # change i18n
@@ -167,7 +168,7 @@ chattr +ai /etc/inittab
 # stop system-services:
 stop_service(){
   systemctl stop NetworkManager
-  systemctl diable NetworkManager
+  systemctl disable NetworkManager
   systemctl stop dnsmasq
   systemctl disable dnsmasq
 }
@@ -185,9 +186,9 @@ sshd_config(){
 # disable ipv6
 disable_ipv6(){
   cat > /etc/modprobe.d/ipv6.conf << EOF
-  alias net-pf-10 off
-  options ipv6 disable=1
-  EOF
+alias net-pf-10 off
+options ipv6 disable=1
+EOF
   echo "NETWORKING_IPV6=off" >> /etc/sysconfig/network
 }
 
@@ -201,11 +202,11 @@ set_limits(){
   source /etc/rc.d/rc.local
 
   cat << EOF > /etc/security/limits.conf
-  *    soft    nofile  655350
-  *    hard    nofile  655350
-  *    soft    nproc 655350
-  *    hard    nproc 655350
-  EOF
+*    soft    nofile  655350
+*    hard    nofile  655350
+*    soft    nproc 655350
+*    hard    nproc 655350
+EOF
   sed -i 's/4096/655350/g' /etc/security/limits.d/20-nproc.conf
  }
 
@@ -251,6 +252,8 @@ kernel.msgmax = 65536
 
 net.ipv4.ip_local_port_range = 1024 65000
 EOF
+
+sysctl -p
 }
 
 
@@ -270,9 +273,12 @@ install_java(){
   echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
   echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
 
+  source /etc/profile.d/jdk.sh
   which java 
   java -version
   format
+  
+ 
   echo "JAVA 安装完成·"
 }
 
