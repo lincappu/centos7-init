@@ -1,3 +1,3 @@
 # centos7_init_scripts
-## nihao
-大事发生
+
+本脚本针对 Centos7 系统进行系统初始化。
