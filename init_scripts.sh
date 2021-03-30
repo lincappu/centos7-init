@@ -16,12 +16,12 @@ if [ $(id -u) != "0" ]; then
     exit 1
 fi
 
+
 # set format
 function format() {
 #    echo -e "\033[32m Success!!!\033[0m\n"
     echo "#########################################################"
 }
-
 
 
 # install epel repo and updte yum repo.
@@ -185,7 +185,7 @@ do
 done
 }
 
-sleep 2
+sleep 3
 
 # update kernel to ml
 update_kernel(){
@@ -202,6 +202,7 @@ update_ntpdate(){
   echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
   hwclock -w
 }
+
 
 # add public dns
 add_public_dns(){
@@ -221,6 +222,7 @@ disable_firewalld(){
   systemctl disable iptables  &> /dev/null 
 }
 
+
 # set history format
 set_history(){
   cat > /etc/profile.d/system-audit.sh << EOF
@@ -237,11 +239,13 @@ EOF
 source  /etc/profile.d/system-audit.sh
 }
 
+
 # change i18n support Chinese
 set_i18n(){
   cp /etc/sysconfig/i18n /etc/sysconfig/i18n.bak
   echo 'LANG="en_US.UTF-8"' >/etc/sysconfig/i18n
 }
+
 
 # lock keyfile
 set_lock_keyfile(){
@@ -262,7 +266,6 @@ disable_system_service(){
 }
 
 
-
 # set ssh config
 set_sshd_config(){
   sed -i 's/\#Port 22/Port 10222/' /etc/ssh/sshd_config
@@ -270,6 +273,7 @@ set_sshd_config(){
   sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
   systemctl  restart  sshd 
 }
+
 
 # disable ipv6
 disable_ipv6(){
@@ -344,6 +348,7 @@ net.ipv4.ip_local_port_range = 1024 65000
 EOF
   sysctl -p
 }
+
 sleep 2
 
 # install java
@@ -352,6 +357,7 @@ install_openjdk_1.80(){
     yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
     echo "open jdk 安装完成·"
 }
+
 
 install_oraclejdk_1.8u161(){
   yum remove -y java  &> /dev/null
@@ -393,6 +399,7 @@ install_maven(){
   echo "maven 安装完成"
   format
 }
+
 sleep 3
 
 # install php
