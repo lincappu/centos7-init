@@ -87,6 +87,8 @@ cat << EOF >> /etc/hosts
 EOF
 }
 
+format
+
 set_machine_hostname(){
 while :
     do
@@ -115,7 +117,7 @@ while :
         continue
     fi
     done
-
+    format
     # add hosts record.
     net_ip=$(ifconfig eth0  |  grep  -w "inet" | awk '{print $2}')
     if [ -n $net_ip ];then
@@ -136,24 +138,26 @@ while :
 add_user(){
 while :
 do
-    echo "1.选择是否设置 root 密码."
-    echo "2.选择添加用户、设置密码及创建 ssh-key."
-    echo "3.选择是否为用户设置 sudoers 权限."
+    format
+    echo "本段提供一下功能:"
+    echo "1、选择是否设置 root 密码."
+    echo "2、选择添加用户、设置密码及创建 ssh-key."
+    echo "3、选择是否为用户设置 sudoers 权限."
 
     read -p "是否要修改 root 密码（y/n）： "  change_root_pass_or
     if [[ $change_root_pass_or == "y" ]];then
-        read -p "请输入 root 的密码："  root_pass
-        echo "你要设置的 root 密码为： $root_pass"
+        read -p "请输入 root 的密码：["  root_pass
+        echo "你要设置的 root 密码为：[ $root_pass"
         sleep 3
         echo "$root_pass" |  passwd  root  --stdin  &> /dev/null
     else
-        echo "你已选择不设置 root 密码。"
+        echo "你已选择不设置 root 密码."
     fi
     echo
     while :
     do
-        read -p "请输入要添加的用户名：： "  add_user_name
-        read -p "请输入要添加用户的密码： "  add_user_pass
+        read -p "请输入要添加的用户名:["  add_user_name
+        read -p "请输入要添加用户的密码:["  add_user_pass
         echo "将要创建的用户及密码为： $add_user_name   $add_user_pass"
         sleep 3
         useradd $add_user_name
@@ -161,9 +165,9 @@ do
         echo "为用户生成 ssh-key"
         su -c 'ssh-keygen -t rsa  -P ""  -f ~/.ssh/id_rsa'  $add_user_name
         echo
-        read -p "是否为用户设置 sudoers权限 (y/n)： " set_sudoers_or
+        read -p "是否为用户设置 sudoers权限 (y/n):[" set_sudoers_or
         if [[ $set_sudoers_or == "y" ]];then
-            read -p "请输入 sudoers规则（root权限规则为: [ $add_user_name  ALL=(ALL)  NOPASSWD:ALL）]: "  set_sudoers_content
+            read -p "请输入 sudoers规则（root权限规则为: [ $add_user_name  ALL=(ALL)  NOPASSWD:ALL ]:  ["  set_sudoers_content
             echo "$set_sudoers_content" > /etc/sudoers.d/$add_user_name
             echo "用户$add_user_name  sudoers 规则添加成功，规则如下："
             cat /etc/sudoers.d/$add_user_name
@@ -215,11 +219,15 @@ add_public_dns(){
 
 # disable selinux add iptables 
 disable_firewalld(){
-  [ `getenforce` != "Disabled" ] && setenforce 0 &> /dev/null && sed -i s/"^SELINUX=.*$"/"SELINUX=disabled"/g /etc/sysconfig/selinux
-  systemctl stop firewalld  &> /dev/null
-  systemctl disable firewalld &> /dev/null
-  systemctl stop  iptables  &> /dev/null
-  systemctl disable iptables  &> /dev/null 
+    [ `getenforce` != "Disabled" ] && setenforce 0 &> /dev/null && sed -i s/"^SELINUX=.*$"/"SELINUX=disabled"/g /etc/sysconfig/selinux
+    systemctl stop firewalld  &> /dev/null
+    systemctl disable firewalld &> /dev/null
+    systemctl stop  iptables  &> /dev/null
+    systemctl disable iptables  &> /dev/null
+    format
+    echo "已关闭系统 firewalld 防火墙"
+    format
+
 }
 
 
@@ -236,14 +244,7 @@ fi
 HISTTIMEFORMAT="%F %T $USER_IP:`whoami` "     
 export HISTTIMEFORMAT
 EOF
-source  /etc/profile.d/system-audit.sh
-}
-
-
-# change i18n support Chinese
-set_i18n(){
-  cp /etc/sysconfig/i18n /etc/sysconfig/i18n.bak
-  echo 'LANG="en_US.UTF-8"' >/etc/sysconfig/i18n
+    source  /etc/profile.d/system-audit.sh
 }
 
 
@@ -351,15 +352,16 @@ EOF
 
 sleep 2
 
-# install java
-install_openjdk_1.80(){
+# install java 1.80
+install_openjdk(){
     yum remove -y java  &> /dev/null
     yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
     echo "open jdk 安装完成·"
 }
 
 
-install_oraclejdk_1.8u161(){
+#  install  oraclejdk 8u202
+install_oraclejdk(){
   yum remove -y java  &> /dev/null
 
   wget https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-linux-x64.tar.gz
@@ -582,25 +584,24 @@ Confirm new password: 重复输入要设置的 root 密码 "
 sleep 2
 
 main(){
-    add_hosts
-    update_yum_repo
-    install_basic_package
-    set_machine_hostname
-    add_user
+#    add_hosts
+#    update_yum_repo
+#    install_basic_package
+#    set_machine_hostname
+#    add_user
     #update_kernel
-    update_ntpdate
+#    update_ntpdate
     #add_public_dns
-    disable_firewalld
-    set_history
-    set_i18n
+#    disable_firewalld
+#    set_history
     set_lock_keyfile
     disable_system_service
     set_sshd_config
     disable_ipv6
     set_system_limits
     update_kernel_parameter
-    #install_openjdk_1.80
-    #install_oraclejdk_1.8u161
+#    install_openjdk
+    install_oraclejdk
     #install_maven
     #install_php
     #install_nodejs
@@ -615,9 +616,14 @@ echo "本脚本执行两种执行方式：\
 1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\
 2、执行本脚本加上需要执行的函数作为参数。"
 
+echo "等待 5 秒"
+sleep 5
+
 if [[ -z $* ]]; then
     echo  "开始执行 main 函数初始化....."
     main
+    format
+    echo "脚本执行完成，请重启"
 fi
 
 if [[ $# -ge 1 ]]; then
@@ -653,9 +659,6 @@ if [[ $# -ge 1 ]]; then
         set_history)
         set_history;;
 
-        set_i18n)
-        set_i18n;;
-
         set_lock_keyfile)
         set_lock_keyfile;;
 
@@ -674,11 +677,11 @@ if [[ $# -ge 1 ]]; then
         update_kernel_parameter)
         update_kernel_parameter;;
 
-        install_openjdk_1.80)
-        install_openjdk_1.80;;
+        install_openjdk)
+        install_openjdk;;
 
-        install_oraclejdk_1.8u161)
-        install_oraclejdk_1.8u161;;
+        install_oraclejdk)
+        install_oraclejdk;;
 
         install_maven)
         install_maven;;
@@ -692,12 +695,10 @@ if [[ $# -ge 1 ]]; then
         install_mysql)
         install_mysql;;
 
-
-
         esac
     done
 fi
 
+echo "脚本执行完成，请重启"
 
-echo "脚本执行完成，设备开始重启，如果是阿里云 ECS 请到控制中重新重启。"
-reboot
+#Wo9MzTUT4YsYtXE5
