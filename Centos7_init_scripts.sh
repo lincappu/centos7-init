@@ -10,6 +10,8 @@
 IPS=''
 CURRENT_PWD=$(pwd)
 
+
+echo "2222"
 # check user is root
 if [ $(id -u) != "0" ]; then
     echo "Error: You must be root to run this script, please use root to initialization OS."
@@ -32,11 +34,11 @@ update_yum_repo(){
     yum clean all
     yum makecache
     yum  update --skip-broken  -y
-
+    format
+    sleep 3
 }
 
-format
-sleep 3
+
 
 # install basic package.
 install_basic_package(){
@@ -78,12 +80,10 @@ nload  \
 atop  \
 expect
 
-
+    format
+    sleep 3
 
 }
-
-format
-sleep 3
 
 # add hosts
 add_hosts(){
@@ -135,10 +135,9 @@ while :
         exit 1
     fi
 
+    format
+    sleep 3
 }
-
-format
-sleep 3
 
 # add user and set user authorization.
 add_user(){
@@ -193,10 +192,12 @@ do
     done
     break
 done
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
+
 
 # update kernel to ml
 update_kernel(){
@@ -206,20 +207,23 @@ update_kernel(){
     yum --enablerepo=elrepo-kernel install -y kernel-ml
     grub2-set-default 0
     grub2-mkconfig -o /boot/grub2/grub.cfg
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
+
 
 #  NTP update
 update_ntpdate(){
     echo "开始进行 ntpdate 时钟同步...."
     echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
     hwclock -w
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 # add public dns
 add_public_dns(){
@@ -228,10 +232,11 @@ add_public_dns(){
     echo  "nameserver  114.114.114.114" >> /etc/resolv.conf
     echo  "nameserver  223.5.5.5" >> /etc/resolv.conf
     echo  "nameserver  8.8.8.8" >> /etc/resolv.conf
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 
 # disable selinux add iptables 
@@ -242,10 +247,12 @@ disable_firewalld(){
     systemctl disable firewalld &> /dev/null
     systemctl stop  iptables  &> /dev/null
     systemctl disable iptables  &> /dev/null
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
+
 
 # set history format
 set_history(){
@@ -262,10 +269,11 @@ HISTTIMEFORMAT="%F %T $USER_IP:`whoami` "
 export HISTTIMEFORMAT
 EOF
     source  /etc/profile.d/system-audit.sh
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 # lock keyfile.  NOTICE：设置完 keyfile 后不能再对这些文件进行修改，会影响添加用户及修改密码功能。
 set_lock_keyfile(){
@@ -278,40 +286,44 @@ set_lock_keyfile(){
 
 # stop system services:
 disable_system_service(){
-  systemctl stop NetworkManager
-  systemctl disable NetworkManager
-  systemctl stop dnsmasq
-  systemctl disable dnsmasq
+    echo "开始关闭系统服务......"
+    systemctl stop NetworkManager
+    systemctl disable NetworkManager
+    systemctl stop dnsmasq
+    systemctl disable dnsmasq
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 # set ssh config
 set_sshd_config(){
-  sed -i 's/\#Port 22/Port 10222/' /etc/ssh/sshd_config
-  sed -i 's/^GSSAPIAuthentication yes$/GSSAPIAuthentication no/' /etc/ssh/sshd_config
-  sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
-  systemctl  restart  sshd
-  echo "修改 ssh 配置完成"
-  format
+    sed -i 's/\#Port 22/Port 10222/' /etc/ssh/sshd_config
+    sed -i 's/^GSSAPIAuthentication yes$/GSSAPIAuthentication no/' /etc/ssh/sshd_config
+    sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
+    systemctl  restart  sshd
+    echo "修改 ssh 配置完成"
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 # disable ipv6
 disable_ipv6(){
-  cat > /etc/modprobe.d/ipv6.conf << EOF
+    cat > /etc/modprobe.d/ipv6.conf << EOF
 alias net-pf-10 off
 options ipv6 disable=1
 EOF
-  echo "NETWORKING_IPV6=off" >> /etc/sysconfig/network
-  echo "禁用 ipv6 配置完成"
+    echo "NETWORKING_IPV6=off" >> /etc/sysconfig/network
+    echo "禁用 ipv6 配置完成"
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
+
 
 # set system limits
 set_system_limits(){
@@ -328,10 +340,10 @@ set_system_limits(){
 EOF
     sed -i 's/4096/655350/g' /etc/security/limits.d/20-nproc.conf
     echo "设置系统 limits 参数完成"
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 #  kernel optimizer
 update_kernel_parameter(){
@@ -378,10 +390,11 @@ net.ipv4.ip_local_port_range = 1024 65000
 EOF
     sysctl -p
     echo "更新系统内核参数完成"
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 # install java 1.80
 install_openjdk(){
@@ -389,56 +402,59 @@ install_openjdk(){
     yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel  -y
     echo "open jdk 安装完成·"
 
+    format
+    sleep 3
+
 }
 
-format
-sleep 3
 
 #  install  oraclejdk 8u202
 install_oraclejdk(){
-      yum remove -y java  &> /dev/null
-      wget https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-linux-x64.tar.gz
-      tar zxf  jdk-8u202-linux-x64.tar.gz -C /opt
-      sleep 2
-      cd /opt
-      ln -s jdk1.8.0_202  jdk
-      cat /dev/null  > /etc/profile.d/jdk.sh
-      echo '#jdk plugin'  >> /etc/profile.d/jdk.sh
-      echo 'export JAVA_HOME=/opt/jdk'  >> /etc/profile.d/jdk.sh
-      echo 'export JRE_HOME=/opt/jdk/jre'  >> /etc/profile.d/jdk.sh
-      echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
-      echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
-      source /etc/profile.d/jdk.sh
-      which java
-      java -version
-      format
-      echo "oracle jdk 安装完成·"
+    yum remove -y java  &> /dev/null
+    wget https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-linux-x64.tar.gz
+    tar zxf  jdk-8u202-linux-x64.tar.gz -C /opt
+    sleep 2
+    cd /opt
+    ln -s jdk1.8.0_202  jdk
+    cat /dev/null  > /etc/profile.d/jdk.sh
+    echo '#jdk plugin'  >> /etc/profile.d/jdk.sh
+    echo 'export JAVA_HOME=/opt/jdk'  >> /etc/profile.d/jdk.sh
+    echo 'export JRE_HOME=/opt/jdk/jre'  >> /etc/profile.d/jdk.sh
+    echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
+    echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
+    source /etc/profile.d/jdk.sh
+    which java
+    java -version
+    format
+    echo "oracle jdk 安装完成·"
 
-      cd ${CURRENT_PWD}
+    cd ${CURRENT_PWD}
+
+    format
+    sleep 3
 
 }
 
-format
-sleep 3
 
 # install maven
 install_maven(){
-  wget https://archive.apache.org/dist/maven/maven-3/3.5.3/binaries/apache-maven-3.5.3-bin.tar.gz
-  tar zxf  apache-maven-3.5.3-bin.tar.gz  -C  /opt
-  sleep 2
-  cd /opt
-  ln -s apache-maven-3.5.3 maven
-  
-  cat /dev/null  >   /etc/profile.d/maven.sh
-  echo '# maven plugin'  >> /etc/profile.d/maven.sh
-  echo 'export MAVEN_HOME=/opt/maven'  >> /etc/profile.d/maven.sh
-  echo 'export PATH=$PATH:$MAVEN_HOME/bin'  >> /etc/profile.d/maven.sh
-  which mvn
-  echo "maven 安装完成"
+    wget https://archive.apache.org/dist/maven/maven-3/3.5.3/binaries/apache-maven-3.5.3-bin.tar.gz
+    tar zxf  apache-maven-3.5.3-bin.tar.gz  -C  /opt
+    sleep 2
+    cd /opt
+    ln -s apache-maven-3.5.3 maven
+
+    cat /dev/null  >   /etc/profile.d/maven.sh
+    echo '# maven plugin'  >> /etc/profile.d/maven.sh
+    echo 'export MAVEN_HOME=/opt/maven'  >> /etc/profile.d/maven.sh
+    echo 'export PATH=$PATH:$MAVEN_HOME/bin'  >> /etc/profile.d/maven.sh
+    which mvn
+    echo "maven 安装完成"
+    format
+    sleep 3
 }
 
-format
-sleep 3
+
 
 # install php
 function install_php(){
@@ -447,8 +463,7 @@ function install_php(){
     systemctl enable php-fpm.service
 }
 
-format
-sleep 3
+
 
 install_nodejs(){
     yum install https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm -y
@@ -482,10 +497,11 @@ EOF
     n latest
     n stable
 
+    format
+    sleep 3
+
 }
 
-format
-sleep 3
 
 # install mysql 55/56/57/80
 install_mysql(){
@@ -617,10 +633,12 @@ Confirm new password: 重复输入要设置的 root 密码 "
             mysql -uroot -p"${mysql_root_pass}" -e "show grants for 'root'@'%';"
         fi
     fi
+    
+
+    format
+    sleep 3
 }
 
-format
-sleep 3
 
 
 # main 函数
