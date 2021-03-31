@@ -100,8 +100,8 @@ while :
     echo "输入确认： y"
     echo "重新输入： n"
     echo "退出脚本： q"
-    read -p "Please input the machine hostname:" nodename
-    read -p "You input hostname is : [ $nodename ]，are you sure [y/n/q]:" choice
+    read -p "Please input the machine hostname:[ " nodename
+    read -p "You input hostname is : [ $nodename ]，are you sure (y/n/q): [ " choice
     if [[ "$choice" == "y"  || "$choice" == "n" ||  "$choice" == "q" ]];then
         if [[ "$choice" == "q" ]];then
             echo "scripts exit......"
@@ -127,8 +127,7 @@ while :
         echo "本机 eth0 网卡 ip 为： $net_ip "
         echo "$net_ip $nodename"
         echo "$net_ip $nodename" >> /etc/hosts
-        echo "添加主机名的解析记录OK:"
-        sleep 3
+        echo "添加主机名的解析记录OK"
     else
         echo "没有获取到有效的ip 地址，是确认网卡名称是否是 eth0"
         exit 1
@@ -148,9 +147,9 @@ do
     echo "2、选择添加用户、设置密码及创建 ssh-key."
     echo "3、选择是否为用户设置 sudoers 权限."
 
-    read -p "是否要修改 root 密码（y/n）： "  change_root_pass_or
+    read -p "是否要修改 root 密码(y/n): [ "  change_root_pass_or
     if [[ $change_root_pass_or == "y" ]];then
-        read -p "请输入 root 的密码：["  root_pass
+        read -p "请输入 root 的密码：[ "  root_pass
         echo "你要设置的 root 密码为：[ $root_pass"
         sleep 3
         echo "$root_pass" |  passwd  root  --stdin  &> /dev/null
@@ -160,8 +159,8 @@ do
     echo
     while :
     do
-        read -p "请输入要添加的用户名:["  add_user_name
-        read -p "请输入要添加用户的密码:["  add_user_pass
+        read -p "请输入要添加的用户名:[ "  add_user_name
+        read -p "请输入要添加用户的密码:[ "  add_user_pass
         echo "将要创建的用户及密码为： $add_user_name   $add_user_pass"
         sleep 3
         useradd $add_user_name
@@ -169,9 +168,9 @@ do
         echo "为用户生成 ssh-key"
         su -c 'ssh-keygen -t rsa  -P ""  -f ~/.ssh/id_rsa'  $add_user_name
         echo
-        read -p "是否为用户设置 sudoers权限 (y/n):[" set_sudoers_or
+        read -p "是否为用户设置 sudoers权限 (y/n):[ " set_sudoers_or
         if [[ $set_sudoers_or == "y" ]];then
-            read -p "请输入 sudoers规则（root权限规则为: [ $add_user_name  ALL=(ALL)  NOPASSWD:ALL ]:  ["  set_sudoers_content
+            read -p "请输入 sudoers规则（root权限规则为: [ $add_user_name  ALL=(ALL)  NOPASSWD:ALL ]:  [ "  set_sudoers_content
             echo "$set_sudoers_content" > /etc/sudoers.d/$add_user_name
             echo "用户$add_user_name  sudoers 规则添加成功，规则如下："
             cat /etc/sudoers.d/$add_user_name
@@ -182,7 +181,7 @@ do
         echo "添加用户 $add_user_name 成功。"
         echo
 
-        read -p  "是否继续添加用户(y/n)： " add_user_contine
+        read -p  "是否继续添加用户(y/n):[  " add_user_contine
         if [[ $add_user_contine == 'y' ]];then
             continue
          else
@@ -508,7 +507,7 @@ install_mysql(){
     echo "当前mysql 存储库中所有mysql版本如下："
     yum repolist all | grep mysql
     format
-    read -p "请输入你想安装的mysql版本：[55/56/57/80]，选择版本后其他版本会禁用：["  mysql_version
+    read -p "请输入你想安装的mysql版本：[55/56/57/80]，选择版本后其他版本会禁用：[ "  mysql_version
     if [[ "$mysql_version" == "55" ||  "$mysql_version" == "56" ]];then
         yum-config-manager --disable mysql80-community
         yum-config-manager --enable mysql$mysql_version-community
@@ -533,7 +532,7 @@ install_mysql(){
             exit 20
         fi
         format
-        read -p "是否继续设置 root 密码及权限(y/n): " set_mysql_root_pass_or
+        read -p "是否继续设置 root 密码及权限(y/n): [ " set_mysql_root_pass_or
         if [[ "$set_mysql_root_pass_or" == "y" ]];then
             echo "下面将为 mysql 设置 root 密码，请按以下操作进行 \n
 Enter password:  直接输入回车 \n
@@ -544,8 +543,8 @@ Confirm new password: 重复输入要设置的 root 密码 "
             format
             echo "请在下面输入用户授权规则(用单引号)，例：\n
 [ GRANT ALL privileges ON *.* TO 'root'@'%' identified by 'password' WITH GRANT OPTION; ]"
-            read -p "要设置grant rule:[" mysql_grant_rule
-            read -p "请输入当前mysql root的密码:["  mysql_root_pass
+            read -p "要设置grant rule: [ " mysql_grant_rule
+            read -p "请输入当前mysql root的密码: [ "  mysql_root_pass
             mysql -uroot -p"${mysql_root_pass}" -e "${mysql_grant_rule}"
             mysql -uroot -p"${mysql_root_pass}" -e "flush privileges;"
             format
@@ -578,7 +577,7 @@ Confirm new password: 重复输入要设置的 root 密码 "
             exit 21
         fi
         format
-        read -p "是否继续设置 root 密码及权限(y/n): " set_mysql_root_pass_or
+        read -p "是否继续设置 root 密码及权限(y/n): [ " set_mysql_root_pass_or
         if [[ "$set_mysql_root_pass_or" == "y" ]];then
             passlog=$(grep 'temporary password' /var/log/mysqld.log)
             pass=${passlog:${#passlog}-12:${#passlog}}
@@ -612,7 +611,7 @@ Confirm new password: 重复输入要设置的 root 密码 "
             exit 21
         fi
         format
-        read -p "是否继续设置 root 密码及权限(y/n): " set_mysql_root_pass_or
+        read -p "是否继续设置 root 密码及权限(y/n): [ " set_mysql_root_pass_or
         if [[ "$set_mysql_root_pass_or" == "y" ]];then
             passlog=$(grep 'temporary password' /var/log/mysqld.log |tail -n 1 )
             pass=${passlog:${#passlog}-12:${#passlog}}
@@ -620,7 +619,7 @@ Confirm new password: 重复输入要设置的 root 密码 "
             mysql -uroot -p"${pass}" -e "set global validate_password.length=4;" --connect-expired-password
             mysql -uroot -p"${pass}" -e "set global validate_password.mixed_case_count=0;" --connect-expired-password
             mysql -uroot -p"${pass}" -e "set global validate_password.number_count=0;" --connect-expired-password
-            read -p "请输入 mysql root 密码：[" mysql_root_pass
+            read -p "请输入 mysql root 密码: [ " mysql_root_pass
             mysql -uroot -p"${mysql_root_pass}" -e "update mysql.user set host='%' where user='root';" --connect-expired-password
             mysql -uroot -p"${mysql_root_pass}" -e "flush privileges;" --connect-expired-password
             echo "mysql root 密码设置及授权完成,root 用户授权规则如下："
