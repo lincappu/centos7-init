@@ -186,6 +186,7 @@ do
         if [[ $add_user_contine == 'y' ]];then
             continue
          else
+            echo "添加用户结束."
             break
         fi
     done
@@ -237,7 +238,6 @@ add_public_dns(){
 }
 
 
-
 # disable selinux add iptables 
 disable_firewalld(){
     echo "开始关闭系统防火墙......"
@@ -250,7 +250,6 @@ disable_firewalld(){
     format
     sleep 3
 }
-
 
 
 # set history format
@@ -423,7 +422,7 @@ install_oraclejdk(){
     which java
     java -version
     cd ${CURRENT_PWD}
-    echo "oracle jdk 安装完成·"
+    echo "oraclejdk 安装完成·"
 
     format
     sleep 3
@@ -665,11 +664,10 @@ main(){
 
 
 # exec scripts
-format
 echo "本脚本执行两种执行方式：\n
 1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
 2、执行本脚本加上需要执行的函数作为参数。"
-
+format
 sleep 3
 
 if [[ -z $* ]]; then
@@ -678,7 +676,7 @@ if [[ -z $* ]]; then
     sleep 3
     main
     format
-    echo "脚本执行完成，请重启"
+    echo "脚本执行完成，请重启机器"
 fi
 
 if [[ $# -ge 1 ]]; then
