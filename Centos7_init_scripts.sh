@@ -18,14 +18,14 @@ fi
 
 
 # set format
-function format() {
+format() {
 #    echo -e "\033[32m Success!!!\033[0m\n"
     echo "#########################################################"
 }
 
 
 # install epel repo and updte yum repo.
-function update_yum_repo(){
+update_yum_repo(){
     echo "开始更新系统 yum 仓库......"
     yum install epel-release -y
     yum install https://centos7.iuscommunity.org/ius-release.rpm  -y
@@ -39,7 +39,7 @@ format
 sleep 3
 
 # install basic package.
-function install_basic_package(){
+install_basic_package(){
     echo "开始更新软件包......"
     yum install -y  \
 wget \
@@ -86,14 +86,14 @@ format
 sleep 3
 
 # add hosts
-function add_hosts(){
+add_hosts(){
 cat << EOF >> /etc/hosts
 EOF
 }
 
 format
 
-function set_machine_hostname(){
+set_machine_hostname(){
 while :
     do
     clear
@@ -141,7 +141,7 @@ format
 sleep 3
 
 # add user and set user authorization.
-function add_user(){
+add_user(){
 while :
 do
     format
@@ -199,7 +199,7 @@ format
 sleep 3
 
 # update kernel to ml
-function update_kernel(){
+update_kernel(){
     echo "更新内核版本："
     rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
     rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
@@ -212,7 +212,7 @@ format
 sleep 3
 
 #  NTP update
-function update_ntpdate(){
+update_ntpdate(){
     echo "开始进行 ntpdate 时钟同步...."
     echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
     hwclock -w
@@ -222,7 +222,7 @@ format
 sleep 3
 
 # add public dns
-function add_public_dns(){
+add_public_dns(){
     echo "开始为系统增加公共 DNS"
     echo > /etc/resolv.conf
     echo  "nameserver  114.114.114.114" >> /etc/resolv.conf
@@ -235,7 +235,7 @@ sleep 3
 
 
 # disable selinux add iptables 
-function disable_firewalld(){
+disable_firewalld(){
     echo "开始关闭系统防火墙......"
     [ `getenforce` != "Disabled" ] && setenforce 0 &> /dev/null && sed -i s/"^SELINUX=.*$"/"SELINUX=disabled"/g /etc/sysconfig/selinux
     systemctl stop firewalld  &> /dev/null
@@ -248,7 +248,7 @@ format
 sleep 3
 
 # set history format
-function set_history(){
+set_history(){
     echo "开始为系统配置历史命令记录......"
     cat > /etc/profile.d/system-audit.sh << EOF
 HISTFILESIZE=20000            
@@ -268,7 +268,7 @@ format
 sleep 3
 
 # lock keyfile.  NOTICE：设置完 keyfile 后不能再对这些文件进行修改，会影响添加用户及修改密码功能。
-function set_lock_keyfile(){
+set_lock_keyfile(){
     chattr +ai /etc/passwd
     chattr +ai /etc/shadow
     chattr +ai /etc/group
@@ -277,7 +277,7 @@ function set_lock_keyfile(){
 
 
 # stop system services:
-function disable_system_service(){
+disable_system_service(){
   systemctl stop NetworkManager
   systemctl disable NetworkManager
   systemctl stop dnsmasq
@@ -288,7 +288,7 @@ format
 sleep 3
 
 # set ssh config
-function set_sshd_config(){
+set_sshd_config(){
   sed -i 's/\#Port 22/Port 10222/' /etc/ssh/sshd_config
   sed -i 's/^GSSAPIAuthentication yes$/GSSAPIAuthentication no/' /etc/ssh/sshd_config
   sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
@@ -301,7 +301,7 @@ format
 sleep 3
 
 # disable ipv6
-function disable_ipv6(){
+disable_ipv6(){
   cat > /etc/modprobe.d/ipv6.conf << EOF
 alias net-pf-10 off
 options ipv6 disable=1
@@ -314,7 +314,7 @@ format
 sleep 3
 
 # set system limits
-function set_system_limits(){
+set_system_limits(){
     ulimit -SHn 102400
     echo "ulimit -SHn 102400" >> /etc/rc.d/rc.local
     source /etc/rc.d/rc.local
@@ -334,7 +334,7 @@ format
 sleep 3
 
 #  kernel optimizer
-function update_kernel_parameter(){
+update_kernel_parameter(){
     cat > /etc/sysctl.conf  << EOF
 
 # this  configuration is add by centos7_init_scripts.
@@ -384,7 +384,7 @@ format
 sleep 3
 
 # install java 1.80
-function install_openjdk(){
+install_openjdk(){
     yum remove -y java  &> /dev/null
     yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel  -y
     echo "open jdk 安装完成·"
@@ -395,7 +395,7 @@ format
 sleep 3
 
 #  install  oraclejdk 8u202
-function install_oraclejdk(){
+install_oraclejdk(){
       yum remove -y java  &> /dev/null
       wget https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-linux-x64.tar.gz
       tar zxf  jdk-8u202-linux-x64.tar.gz -C /opt
@@ -422,7 +422,7 @@ format
 sleep 3
 
 # install maven
-function install_maven(){
+install_maven(){
   wget https://archive.apache.org/dist/maven/maven-3/3.5.3/binaries/apache-maven-3.5.3-bin.tar.gz
   tar zxf  apache-maven-3.5.3-bin.tar.gz  -C  /opt
   sleep 2
@@ -450,7 +450,7 @@ function install_php(){
 format
 sleep 3
 
-function install_nodejs(){
+install_nodejs(){
     yum install https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm -y
     cat > /etc/yum.repos.d/nodesource-el7.repo <<- "EOF"
 [nodesource]
@@ -488,7 +488,7 @@ format
 sleep 3
 
 # install mysql 55/56/57/80
-function install_mysql(){
+install_mysql(){
     echo "开始安装mysql，下载官方仓库中......"
     yum install  https://repo.mysql.com//mysql80-community-release-el7-3.noarch.rpm  -y
     format
@@ -624,7 +624,7 @@ sleep 3
 
 
 # main 函数
-function main(){
+main(){
 #    add_hosts
 #    update_yum_repo
 #    install_basic_package
@@ -654,10 +654,11 @@ function main(){
 echo "111111"
 
 # exec scripts
+format
 echo "本脚本执行两种执行方式：\n
 1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
 2、执行本脚本加上需要执行的函数作为参数。"
-format
+
 sleep 5
 
 if [[ -z $* ]]; then
@@ -738,16 +739,5 @@ if [[ $# -ge 1 ]]; then
         esac
     done
 fi
-
-
-
-
-
-
-
-
-
-
-
 
 
