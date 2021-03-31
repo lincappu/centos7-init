@@ -83,7 +83,6 @@ sleep 3
 # add hosts
 add_hosts(){
 cat << EOF >> /etc/hosts
-
 EOF
 }
 
@@ -248,13 +247,12 @@ EOF
 }
 
 
-# lock keyfile
+# lock keyfile.  NOTICE：设置完 keyfile 后不能再对这些文件进行修改，会影响添加用户及修改密码功能。
 set_lock_keyfile(){
     chattr +ai /etc/passwd
     chattr +ai /etc/shadow
     chattr +ai /etc/group
     chattr +ai /etc/gshadow
-    chattr +ai /etc/inittab
 }
 
 
@@ -266,15 +264,19 @@ disable_system_service(){
   systemctl disable dnsmasq
 }
 
+sleep 3
 
 # set ssh config
 set_sshd_config(){
   sed -i 's/\#Port 22/Port 10222/' /etc/ssh/sshd_config
   sed -i 's/^GSSAPIAuthentication yes$/GSSAPIAuthentication no/' /etc/ssh/sshd_config
   sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
-  systemctl  restart  sshd 
+  systemctl  restart  sshd
+  echo "修改 ssh 配置完成"
+  format
 }
 
+sleep 3
 
 # disable ipv6
 disable_ipv6(){
@@ -283,8 +285,11 @@ alias net-pf-10 off
 options ipv6 disable=1
 EOF
   echo "NETWORKING_IPV6=off" >> /etc/sysconfig/network
+  echo "禁用 ipv6 配置完成"
+  format
 }
 
+sleep 3
 
 # set system limits
 set_system_limits(){
@@ -303,8 +308,11 @@ set_system_limits(){
 
 EOF
   sed -i 's/4096/655350/g' /etc/security/limits.d/20-nproc.conf
+  echo "设置系统 limits 参数完成"
+  format
  }
 
+sleep 3
 
 #  kernel optimizer
 update_kernel_parameter(){
@@ -348,17 +356,22 @@ kernel.msgmax = 65536
 net.ipv4.ip_local_port_range = 1024 65000
 EOF
   sysctl -p
+  echo "更新系统内核参数完成"
+  format
 }
 
-sleep 2
+sleep 3
 
 # install java 1.80
 install_openjdk(){
     yum remove -y java  &> /dev/null
     yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
     echo "open jdk 安装完成·"
+    format
+
 }
 
+sleep 3
 
 #  install  oraclejdk 8u202
 install_oraclejdk(){
@@ -412,6 +425,7 @@ install_php(){
 
 }
 
+sleep 3
 
 install_nodejs(){
     yum install https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm -y
@@ -446,6 +460,8 @@ EOF
     n stable
 
 }
+
+sleep 3
 
 # install mysql 55/56/57/80
 install_mysql(){
@@ -581,7 +597,7 @@ Confirm new password: 重复输入要设置的 root 密码 "
 }
 
 
-sleep 2
+
 
 main(){
 #    add_hosts
@@ -594,7 +610,6 @@ main(){
     #add_public_dns
 #    disable_firewalld
 #    set_history
-    set_lock_keyfile
     disable_system_service
     set_sshd_config
     disable_ipv6
@@ -607,17 +622,18 @@ main(){
     #install_nodejs
     #install_mysql
 
+    set_lock_keyfile
+
 }
 
 
 
 # exec scripts
-echo "本脚本执行两种执行方式：\
-1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\
+echo "本脚本执行两种执行方式：\n
+1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
 2、执行本脚本加上需要执行的函数作为参数。"
-
-echo "等待 5 秒"
-sleep 5
+format
+sleep 3
 
 if [[ -z $* ]]; then
     echo  "开始执行 main 函数初始化....."
@@ -694,11 +710,25 @@ if [[ $# -ge 1 ]]; then
 
         install_mysql)
         install_mysql;;
-
         esac
     done
 fi
 
-echo "脚本执行完成，请重启"
 
 #Wo9MzTUT4YsYtXE5
+
+
+
+
+
+
+chattr -ai /etc/passwd
+chattr -ai /etc/shadow
+chattr -ai /etc/group
+chattr -ai /etc/gshadow
+chattr -ai /etc/inittab
+
+
+
+
+
