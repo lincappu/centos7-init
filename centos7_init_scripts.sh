@@ -658,7 +658,7 @@ main(){
     #install_php
     #install_nodejs
     #install_mysql
-    set_lock_keyfile
+#    set_lock_keyfile
 
 }
 
