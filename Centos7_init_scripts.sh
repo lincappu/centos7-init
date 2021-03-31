@@ -26,19 +26,22 @@ function format() {
 
 # install epel repo and updte yum repo.
 update_yum_repo(){
-  yum install epel-release -y
-  yum install https://centos7.iuscommunity.org/ius-release.rpm  -y
-  yum clean all 
-  yum makecache
-  yum  update --skip-broken  -y
+    echo "开始更新系统 yum 仓库......"
+    yum install epel-release -y
+    yum install https://centos7.iuscommunity.org/ius-release.rpm  -y
+    yum clean all
+    yum makecache
+    yum  update --skip-broken  -y
 
 }
 
+format
 sleep 3
 
 # install basic package.
 install_basic_package(){
-yum install -y  \
+    echo "开始更新软件包......"
+    yum install -y  \
 wget \
 openssl-devel  \
 gcc \
@@ -76,8 +79,10 @@ atop  \
 expect
 
 
+
 }
 
+format
 sleep 3
 
 # add hosts
@@ -132,13 +137,15 @@ while :
 
 }
 
+format
+sleep 3
 
 # add user and set user authorization.
 add_user(){
 while :
 do
     format
-    echo "本段提供一下功能:"
+    echo "开始添加用户及设置用户密码:"
     echo "1、选择是否设置 root 密码."
     echo "2、选择添加用户、设置密码及创建 ssh-key."
     echo "3、选择是否为用户设置 sudoers 权限."
@@ -188,51 +195,62 @@ do
 done
 }
 
+format
 sleep 3
 
 # update kernel to ml
 update_kernel(){
-  rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
-  rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
-  yum --enablerepo=elrepo-kernel install -y kernel-ml
-  grub2-set-default 0
-  grub2-mkconfig -o /boot/grub2/grub.cfg
- }
+    echo "更新内核版本："
+    rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
+    rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
+    yum --enablerepo=elrepo-kernel install -y kernel-ml
+    grub2-set-default 0
+    grub2-mkconfig -o /boot/grub2/grub.cfg
+}
 
+format
+sleep 3
 
 #  NTP update
 update_ntpdate(){
-  echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
-  hwclock -w
+    echo "开始进行 ntpdate 时钟同步...."
+    echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
+    hwclock -w
 }
 
+format
+sleep 3
 
 # add public dns
 add_public_dns(){
-  echo > /etc/resolv.conf
-  echo  "nameserver  114.114.114.114" >> /etc/resolv.conf
-  echo  "nameserver  223.5.5.5" >> /etc/resolv.conf
-  echo  "nameserver  8.8.8.8" >> /etc/resolv.conf
+    echo "开始为系统增加公共 DNS"
+    echo > /etc/resolv.conf
+    echo  "nameserver  114.114.114.114" >> /etc/resolv.conf
+    echo  "nameserver  223.5.5.5" >> /etc/resolv.conf
+    echo  "nameserver  8.8.8.8" >> /etc/resolv.conf
 }
+
+format
+sleep 3
 
 
 # disable selinux add iptables 
 disable_firewalld(){
+    echo "开始关闭系统防火墙......"
     [ `getenforce` != "Disabled" ] && setenforce 0 &> /dev/null && sed -i s/"^SELINUX=.*$"/"SELINUX=disabled"/g /etc/sysconfig/selinux
     systemctl stop firewalld  &> /dev/null
     systemctl disable firewalld &> /dev/null
     systemctl stop  iptables  &> /dev/null
     systemctl disable iptables  &> /dev/null
-    format
-    echo "已关闭系统 firewalld 防火墙"
-    format
-
 }
 
+format
+sleep 3
 
 # set history format
 set_history(){
-  cat > /etc/profile.d/system-audit.sh << EOF
+    echo "开始为系统配置历史命令记录......"
+    cat > /etc/profile.d/system-audit.sh << EOF
 HISTFILESIZE=20000            
 HISTSIZE=20000
 USER_IP=`who -u am i 2>/dev/null| awk '{print $NF}'|sed -e 's/[()]//g'` 
@@ -246,6 +264,8 @@ EOF
     source  /etc/profile.d/system-audit.sh
 }
 
+format
+sleep 3
 
 # lock keyfile.  NOTICE：设置完 keyfile 后不能再对这些文件进行修改，会影响添加用户及修改密码功能。
 set_lock_keyfile(){
@@ -264,6 +284,7 @@ disable_system_service(){
   systemctl disable dnsmasq
 }
 
+format
 sleep 3
 
 # set ssh config
@@ -276,6 +297,7 @@ set_sshd_config(){
   format
 }
 
+format
 sleep 3
 
 # disable ipv6
@@ -286,9 +308,9 @@ options ipv6 disable=1
 EOF
   echo "NETWORKING_IPV6=off" >> /etc/sysconfig/network
   echo "禁用 ipv6 配置完成"
-  format
 }
 
+format
 sleep 3
 
 # set system limits
@@ -309,9 +331,9 @@ set_system_limits(){
 EOF
   sed -i 's/4096/655350/g' /etc/security/limits.d/20-nproc.conf
   echo "设置系统 limits 参数完成"
-  format
  }
 
+format
 sleep 3
 
 #  kernel optimizer
@@ -357,9 +379,9 @@ net.ipv4.ip_local_port_range = 1024 65000
 EOF
   sysctl -p
   echo "更新系统内核参数完成"
-  format
 }
 
+format
 sleep 3
 
 # install java 1.80
@@ -367,10 +389,10 @@ install_openjdk(){
     yum remove -y java  &> /dev/null
     yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
     echo "open jdk 安装完成·"
-    format
 
 }
 
+format
 sleep 3
 
 #  install  oraclejdk 8u202
@@ -396,6 +418,7 @@ install_oraclejdk(){
   cd /root
 }
 
+format
 sleep 3
 
 # install maven
@@ -412,7 +435,6 @@ install_maven(){
   echo 'export PATH=$PATH:$MAVEN_HOME/bin'  >> /etc/profile.d/maven.sh
   which mvn
   echo "maven 安装完成"
-  format
 }
 
 sleep 3
@@ -461,6 +483,7 @@ EOF
 
 }
 
+format
 sleep 3
 
 # install mysql 55/56/57/80
@@ -591,11 +614,12 @@ Confirm new password: 重复输入要设置的 root 密码 "
             mysql -uroot -p"${mysql_root_pass}" -e "flush privileges;" --connect-expired-password
             echo "mysql root 密码设置及授权完成,root 用户授权规则如下："
             mysql -uroot -p"${mysql_root_pass}" -e "show grants for 'root'@'%';"
-            format
         fi
     fi
 }
 
+format
+sleep 3
 
 
 
@@ -633,10 +657,10 @@ echo "本脚本执行两种执行方式：\n
 1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
 2、执行本脚本加上需要执行的函数作为参数。"
 format
-sleep 3
+sleep 5
 
 if [[ -z $* ]]; then
-    echo  "开始执行 main 函数初始化....."
+    echo  "开始执行 main 函数进行系统初始化....."
     main
     format
     echo "脚本执行完成，请重启"
