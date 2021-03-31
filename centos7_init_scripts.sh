@@ -11,7 +11,6 @@ IPS=''
 CURRENT_PWD=$(pwd)
 
 
-echo "2222"
 # check user is root
 if [ $(id -u) != "0" ]; then
     echo "Error: You must be root to run this script, please use root to initialization OS."
@@ -289,8 +288,6 @@ disable_system_service(){
     echo "开始关闭系统服务......"
     systemctl stop NetworkManager
     systemctl disable NetworkManager
-    systemctl stop dnsmasq
-    systemctl disable dnsmasq
 
     format
     sleep 3
@@ -425,10 +422,8 @@ install_oraclejdk(){
     source /etc/profile.d/jdk.sh
     which java
     java -version
-    format
-    echo "oracle jdk 安装完成·"
-
     cd ${CURRENT_PWD}
+    echo "oracle jdk 安装完成·"
 
     format
     sleep 3
@@ -643,16 +638,16 @@ Confirm new password: 重复输入要设置的 root 密码 "
 
 # main 函数
 main(){
-#    add_hosts
-#    update_yum_repo
-#    install_basic_package
-#    set_machine_hostname
-#    add_user
+    add_hosts
+    update_yum_repo
+    install_basic_package
+    set_machine_hostname
+    add_user
     #update_kernel
-#    update_ntpdate
+    update_ntpdate
     #add_public_dns
-#    disable_firewalld
-#    set_history
+    disable_firewalld
+    set_history
     disable_system_service
     set_sshd_config
     disable_ipv6
@@ -664,12 +659,10 @@ main(){
     #install_php
     #install_nodejs
     #install_mysql
-
     set_lock_keyfile
 
 }
 
-echo "111111"
 
 # exec scripts
 format
@@ -677,10 +670,12 @@ echo "本脚本执行两种执行方式：\n
 1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
 2、执行本脚本加上需要执行的函数作为参数。"
 
-sleep 5
+sleep 3
 
 if [[ -z $* ]]; then
     echo  "开始执行 main 函数进行系统初始化....."
+    format
+    sleep 3
     main
     format
     echo "脚本执行完成，请重启"
