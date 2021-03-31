@@ -8,7 +8,7 @@
 #  $Description: CentOS 7.x system configure initial scripts
 #################################################
 IPS=''
-
+CURRENT_PWD=$(pwd)
 
 # check user is root
 if [ $(id -u) != "0" ]; then
@@ -25,7 +25,7 @@ function format() {
 
 
 # install epel repo and updte yum repo.
-update_yum_repo(){
+function update_yum_repo(){
     echo "开始更新系统 yum 仓库......"
     yum install epel-release -y
     yum install https://centos7.iuscommunity.org/ius-release.rpm  -y
@@ -39,7 +39,7 @@ format
 sleep 3
 
 # install basic package.
-install_basic_package(){
+function install_basic_package(){
     echo "开始更新软件包......"
     yum install -y  \
 wget \
@@ -86,14 +86,14 @@ format
 sleep 3
 
 # add hosts
-add_hosts(){
+function add_hosts(){
 cat << EOF >> /etc/hosts
 EOF
 }
 
 format
 
-set_machine_hostname(){
+function set_machine_hostname(){
 while :
     do
     clear
@@ -141,7 +141,7 @@ format
 sleep 3
 
 # add user and set user authorization.
-add_user(){
+function add_user(){
 while :
 do
     format
@@ -199,7 +199,7 @@ format
 sleep 3
 
 # update kernel to ml
-update_kernel(){
+function update_kernel(){
     echo "更新内核版本："
     rpm --import https://www.elrepo.org/RPM-GPG-KEY-elrepo.org
     rpm -Uvh http://www.elrepo.org/elrepo-release-7.0-3.el7.elrepo.noarch.rpm
@@ -212,7 +212,7 @@ format
 sleep 3
 
 #  NTP update
-update_ntpdate(){
+function update_ntpdate(){
     echo "开始进行 ntpdate 时钟同步...."
     echo "0 0 * * * /usr/sbin/ntpdate ntp1.aliyun.com  &>/dev/null" >> /etc/crontab
     hwclock -w
@@ -222,7 +222,7 @@ format
 sleep 3
 
 # add public dns
-add_public_dns(){
+function add_public_dns(){
     echo "开始为系统增加公共 DNS"
     echo > /etc/resolv.conf
     echo  "nameserver  114.114.114.114" >> /etc/resolv.conf
@@ -235,7 +235,7 @@ sleep 3
 
 
 # disable selinux add iptables 
-disable_firewalld(){
+function disable_firewalld(){
     echo "开始关闭系统防火墙......"
     [ `getenforce` != "Disabled" ] && setenforce 0 &> /dev/null && sed -i s/"^SELINUX=.*$"/"SELINUX=disabled"/g /etc/sysconfig/selinux
     systemctl stop firewalld  &> /dev/null
@@ -248,7 +248,7 @@ format
 sleep 3
 
 # set history format
-set_history(){
+function set_history(){
     echo "开始为系统配置历史命令记录......"
     cat > /etc/profile.d/system-audit.sh << EOF
 HISTFILESIZE=20000            
@@ -268,7 +268,7 @@ format
 sleep 3
 
 # lock keyfile.  NOTICE：设置完 keyfile 后不能再对这些文件进行修改，会影响添加用户及修改密码功能。
-set_lock_keyfile(){
+function set_lock_keyfile(){
     chattr +ai /etc/passwd
     chattr +ai /etc/shadow
     chattr +ai /etc/group
@@ -277,7 +277,7 @@ set_lock_keyfile(){
 
 
 # stop system services:
-disable_system_service(){
+function disable_system_service(){
   systemctl stop NetworkManager
   systemctl disable NetworkManager
   systemctl stop dnsmasq
@@ -288,7 +288,7 @@ format
 sleep 3
 
 # set ssh config
-set_sshd_config(){
+function set_sshd_config(){
   sed -i 's/\#Port 22/Port 10222/' /etc/ssh/sshd_config
   sed -i 's/^GSSAPIAuthentication yes$/GSSAPIAuthentication no/' /etc/ssh/sshd_config
   sed -i 's/#UseDNS yes/UseDNS no/' /etc/ssh/sshd_config
@@ -301,7 +301,7 @@ format
 sleep 3
 
 # disable ipv6
-disable_ipv6(){
+function disable_ipv6(){
   cat > /etc/modprobe.d/ipv6.conf << EOF
 alias net-pf-10 off
 options ipv6 disable=1
@@ -314,31 +314,30 @@ format
 sleep 3
 
 # set system limits
-set_system_limits(){
-  ulimit -SHn 102400
-
-  echo "ulimit -SHn 102400" >> /etc/rc.d/rc.local
-  source /etc/rc.d/rc.local
-
-  cat << EOF > /etc/security/limits.d/90-nproc.conf
+function set_system_limits(){
+    ulimit -SHn 102400
+    echo "ulimit -SHn 102400" >> /etc/rc.d/rc.local
+    source /etc/rc.d/rc.local
+    cat << EOF > /etc/security/limits.d/90-nproc.conf
 *    soft    nofile  65535
 *    hard    nofile  65535
 *    soft    nproc   65535
 *    hard    nproc   65535
 *    soft    core    unlimited
 *    hard    core    unlimited
-
 EOF
-  sed -i 's/4096/655350/g' /etc/security/limits.d/20-nproc.conf
-  echo "设置系统 limits 参数完成"
- }
+    sed -i 's/4096/655350/g' /etc/security/limits.d/20-nproc.conf
+    echo "设置系统 limits 参数完成"
+}
 
 format
 sleep 3
 
 #  kernel optimizer
-update_kernel_parameter(){
-cat > /etc/sysctl.conf  << EOF
+function update_kernel_parameter(){
+    cat > /etc/sysctl.conf  << EOF
+
+# this  configuration is add by centos7_init_scripts.
 net.ipv4.ip_forward = 1
 vm.swappiness = 0
 net.ipv4.neigh.default.gc_stale_time = 120
@@ -377,17 +376,17 @@ kernel.msgmax = 65536
 
 net.ipv4.ip_local_port_range = 1024 65000
 EOF
-  sysctl -p
-  echo "更新系统内核参数完成"
+    sysctl -p
+    echo "更新系统内核参数完成"
 }
 
 format
 sleep 3
 
 # install java 1.80
-install_openjdk(){
+function install_openjdk(){
     yum remove -y java  &> /dev/null
-    yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel
+    yum install java-1.8.0-openjdk java-1.8.0-openjdk-devel  -y
     echo "open jdk 安装完成·"
 
 }
@@ -396,33 +395,34 @@ format
 sleep 3
 
 #  install  oraclejdk 8u202
-install_oraclejdk(){
-  yum remove -y java  &> /dev/null
+function install_oraclejdk(){
+      yum remove -y java  &> /dev/null
+      wget https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-linux-x64.tar.gz
+      tar zxf  jdk-8u202-linux-x64.tar.gz -C /opt
+      sleep 2
+      cd /opt
+      ln -s jdk1.8.0_202  jdk
+      cat /dev/null  > /etc/profile.d/jdk.sh
+      echo '#jdk plugin'  >> /etc/profile.d/jdk.sh
+      echo 'export JAVA_HOME=/opt/jdk'  >> /etc/profile.d/jdk.sh
+      echo 'export JRE_HOME=/opt/jdk/jre'  >> /etc/profile.d/jdk.sh
+      echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
+      echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
+      source /etc/profile.d/jdk.sh
+      which java
+      java -version
+      format
+      echo "oracle jdk 安装完成·"
 
-  wget https://mirrors.huaweicloud.com/java/jdk/8u202-b08/jdk-8u202-linux-x64.tar.gz
-  tar zxf  jdk-8u202-linux-x64.tar.gz -C /opt
-  sleep 2
-  cd /opt
-  ln -s jdk1.8.0_202  jdk
-  cat /dev/null  > /etc/profile.d/jdk.sh
-  echo '#jdk plugin'  >> /etc/profile.d/jdk.sh
-  echo 'export JAVA_HOME=/opt/jdk'  >> /etc/profile.d/jdk.sh
-  echo 'export JRE_HOME=/opt/jdk/jre'  >> /etc/profile.d/jdk.sh
-  echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
-  echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
-  source /etc/profile.d/jdk.sh
-  which java 
-  java -version
-  format
-  echo "oracle jdk 安装完成·"
-  cd /root
+      cd ${CURRENT_PWD}
+
 }
 
 format
 sleep 3
 
 # install maven
-install_maven(){
+function install_maven(){
   wget https://archive.apache.org/dist/maven/maven-3/3.5.3/binaries/apache-maven-3.5.3-bin.tar.gz
   tar zxf  apache-maven-3.5.3-bin.tar.gz  -C  /opt
   sleep 2
@@ -437,19 +437,20 @@ install_maven(){
   echo "maven 安装完成"
 }
 
+format
 sleep 3
 
 # install php
-install_php(){
+function install_php(){
     yum install php72u* nginx httpd -y
     systemctl start php-fpm.service
     systemctl enable php-fpm.service
-
 }
 
+format
 sleep 3
 
-install_nodejs(){
+function install_nodejs(){
     yum install https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm -y
     cat > /etc/yum.repos.d/nodesource-el7.repo <<- "EOF"
 [nodesource]
@@ -487,7 +488,7 @@ format
 sleep 3
 
 # install mysql 55/56/57/80
-install_mysql(){
+function install_mysql(){
     echo "开始安装mysql，下载官方仓库中......"
     yum install  https://repo.mysql.com//mysql80-community-release-el7-3.noarch.rpm  -y
     format
@@ -622,8 +623,8 @@ format
 sleep 3
 
 
-
-main(){
+# main 函数
+function main(){
 #    add_hosts
 #    update_yum_repo
 #    install_basic_package
@@ -650,7 +651,7 @@ main(){
 
 }
 
-
+echo "111111"
 
 # exec scripts
 echo "本脚本执行两种执行方式：\n
