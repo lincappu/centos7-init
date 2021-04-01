@@ -13,9 +13,16 @@ CURRENT_PWD=$(pwd)
 
 # check user is root
 if [ $(id -u) != "0" ]; then
-    echo "Error: You must be root to run this script, please use root to initialization OS."
+    echo "Error: 你不是管理员账户身份，此脚本需要管理员身份运行，exit......"
     exit 1
 fi
+
+# check network
+if ping -c2 baidu.com &>/dev/null ;then
+    echo
+else
+    echo "当前机器网络不通，本脚本需要联网执行。"
+    exit 2
 
 
 # set format
@@ -68,7 +75,6 @@ tree  \
 yum-utils  \
 git \
 curl  \
-telnet  \
 pcre  \
 pcre-devel  \
 ntpdate  \
@@ -77,7 +83,10 @@ tmux  \
 mc  \
 nload  \
 atop  \
-expect
+expect  \
+dos2unix  \
+unzip \
+vim
 
     format
     sleep 3
@@ -347,6 +356,7 @@ update_kernel_parameter(){
 # this  configuration is add by centos7_init_scripts.
 net.ipv4.ip_forward = 1
 vm.swappiness = 0
+vm.max_map_count= 262144
 net.ipv4.neigh.default.gc_stale_time = 120
 
 net.ipv4.conf.all.rp_filter = 0
@@ -418,6 +428,7 @@ install_oraclejdk(){
     echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
     echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
     source /etc/profile.d/jdk.sh
+    ln -s  /opt/jdk/bin/java   /usr/bin/java
     which java
     java -version
     cd ${CURRENT_PWD}
@@ -672,7 +683,7 @@ sleep 3
 if [[ -z $* ]]; then
     echo  "开始执行 main 函数进行系统初始化....."
     format
-    sleep 3
+    sleep 5
     main
     format
     echo "脚本执行完成，请重启机器"
