@@ -23,14 +23,12 @@ else
 fi
 
 # check network_interface is eth0
-if ifconfig | grep eth0 ;then
+if ifconfig | grep eth0  2>&1 > /dev/null ;then
     echo
 else
     echo "当前机器没有 eth0 网卡，请检查."
     exit 3
 fi
-
-
 
 
 # PSF
@@ -69,6 +67,7 @@ update_yum_repo(){
 # install basic package.
 install_basic_package(){
     echo "开始更新软件包......"
+    sleep 3
     yum install -y  \
 wget \
 openssl-devel  \
@@ -833,19 +832,6 @@ EOF
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 # main 函数
 main(){
     add_hosts
@@ -869,14 +855,15 @@ main(){
     #install_php
     #install_nodejs
     #install_mysql
+    #instal_redis
 #    set_lock_keyfile
 
 }
 
 
 # exec scripts
-echo "本脚本执行两种执行方式：\n
-1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
+echo "本脚本执行两种执行方式
+1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！
 2、执行本脚本加上需要执行的函数作为参数。"
 format
 sleep 3
@@ -894,270 +881,76 @@ if [[ $# -ge 1 ]]; then
     for arg in $* ; do
         case ${arg} in
         add_hosts)
-        add_hosts;;
-
+        add_hosts
+        ;;
         update_yum_repo)
-        update_yum_repo;;
-
+        update_yum_repo
+        ;;
         install_basic_package)
-        install_basic_package;;
-
+        install_basic_package
+        ;;
         set_machine_hostname)
-        set_machine_hostname;;
-
+        set_machine_hostname
+        ;;
         add_user)
-        add_user;;
-
+        add_user
+        ;;
         update_kernel)
-        update_kernel;;
-
+        update_kernel
+        ;;
         update_ntpdate)
-        update_ntpdate;;
-
+        update_ntpdate
+        ;;
         add_public_dns)
-        add_public_dns;;
-
+        add_public_dns
+        ;;
         disable_firewalld)
-        disable_firewalld;;
-
+        disable_firewalld
+        ;;
         set_history)
-        set_history;;
-
+        set_history
+        ;;
         set_lock_keyfile)
-        set_lock_keyfile;;
-
+        set_lock_keyfile
+        ;;
         disable_system_service)
-        disable_system_service;;
-
+        disable_system_service
+        ;;
         set_sshd_config)
-        set_sshd_config;;
-
+        set_sshd_config
+        ;;
         disable_ipv6)
-        disable_ipv6;;
-
+        disable_ipv6
+        ;;
         set_system_limits)
-        set_system_limits;;
-
+        set_system_limits
+        ;;
         update_kernel_parameter)
-        update_kernel_parameter;;
-
+        update_kernel_parameter
+        ;;
         install_openjdk)
-        install_openjdk;;
-
+        install_openjdk
+        ;;
         install_oraclejdk)
-        install_oraclejdk;;
-
+        install_oraclejdk
+        ;;
         install_maven)
-        install_maven;;
-
+        install_maven
+        ;;
         install_php)
-        install_php;;
-
+        install_php
+        ;;
         install_nodejs)
-        install_nodejs;;
-
+        install_nodejs
+        ;;
         install_mysql)
-        install_mysql;;
+        install_mysql
+        ;;
+        instal_redis)
+        instal_redis
+        ;;
+
         esac
     done
 fi
 
-    echo "65535"  > /proc/sys/net/core/somaxconn
-    if [ ! -d "/etc/redis" ];then
-        mkdir /etc/redis
-    fi
-    if [ ! -d "/var/lib/redisdata" ];then
-        mkdir /var/lib/redisdata
-    fi
-
-    mv redis.conf redis.conf.bak
-    echo "bind 0.0.0.0" >> redis.conf
-    echo "port 6379" >> redis.conf
-    echo "tcp-backlog 65535" >> redis.conf
-    echo "tcp-keepalive 300" >> redis.conf
-    echo "daemonize yes" >> redis.conf
-    echo "pidfile /var/run/redis_6379.pid" >> redis.conf
-    echo "loglevel notice" >> redis.conf
-    echo 'logfile "/var/log/redis.log"' >> redis.conf
-    echo "databases 16" >> redis.conf
-    echo "always-show-logo yes" >> redis.conf
-    echo "save 900 1" >> redis.conf
-    echo "save 300 10" >> redis.conf
-    echo "save 60 10000" >> redis.conf
-    echo "stop-writes-on-bgsave-error yes" >> redis.conf
-    echo "rdbcompression yes" >> redis.conf
-    echo "rdbchecksum yes" >> redis.conf
-    echo "dbfilename dump.rdb" >> redis.conf
-    echo "dir /var/lib/redisdata" >> redis.conf
-    echo "appendonly yes" >> redis.conf
-    echo 'appendfilename "appendonly.aof"' >> redis.conf
-    echo "appendfsync everysec" >> redis.conf
-    echo "no-appendfsync-on-rewrite no" >> redis.conf
-    echo "auto-aof-rewrite-percentage 100b" >> redis.conf
-    echo "auto-aof-rewrite-min-size 64mb" >> redis.conf
-    echo "aof-load-truncated yes" >> redis.conf
-    echo "aof-use-rdb-preamble yes" >> redis.conf
-    echo "slowlog-log-slower-than 10000" >> redis.conf
-    echo "slowlog-max-len 128" >> redis.conf
-    echo "latency-monitor-threshold 0" >> redis.conf
-    echo "requirepass $redis_pass" >> redis.conf
-    echo "protected-mode no" >> redis.conf
-    echo "" >> redis.conf
-
-    cp redis.conf  redis.conf.bak  /etc/redis/
-
-    cat > /usr/lib/systemd/system/redis.service <<-EOF
-[Unit]
-Description=Redis persistent key-value database
-After=network.target
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-Type=notify
-User=root
-Group=root
-PrivateTmp=yes
-Restart=on-failure
-ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf
-ExecStop=/usr/local/bin/redis-cli -h 127.0.0.1 -p 6379 -a $redis_pass shutdown
-
-
-[Install]
-WantedBy=multi-user.target
-EOF
-    systemctl daemon-reload
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# main 函数
-main(){
-    add_hosts
-    update_yum_repo
-    install_basic_package
-    set_machine_hostname
-    add_user
-    #update_kernel
-    update_ntpdate
-    #add_public_dns
-    disable_firewalld
-    set_history
-    disable_system_service
-    set_sshd_config
-    disable_ipv6
-    set_system_limits
-    update_kernel_parameter
-#    install_openjdk
-    install_oraclejdk
-    #install_maven
-    #install_php
-    #install_nodejs
-    #install_mysql
-#    set_lock_keyfile
-
-}
-
-
-# exec scripts
-echo "本脚本执行两种执行方式：\n
-1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
-2、执行本脚本加上需要执行的函数作为参数。"
-format
-sleep 3
-
-if [[ -z $* ]]; then
-    echo  "开始执行 main 函数进行系统初始化....."
-    format
-    sleep 5
-    main
-    format
-    echo "脚本执行完成，请重启机器"
-fi
-
-if [[ $# -ge 1 ]]; then
-    for arg in $* ; do
-        case ${arg} in
-        add_hosts)
-        add_hosts;;
-
-        update_yum_repo)
-        update_yum_repo;;
-
-        install_basic_package)
-        install_basic_package;;
-
-        set_machine_hostname)
-        set_machine_hostname;;
-
-        add_user)
-        add_user;;
-
-        update_kernel)
-        update_kernel;;
-
-        update_ntpdate)
-        update_ntpdate;;
-
-        add_public_dns)
-        add_public_dns;;
-
-        disable_firewalld)
-        disable_firewalld;;
-
-        set_history)
-        set_history;;
-
-        set_lock_keyfile)
-        set_lock_keyfile;;
-
-        disable_system_service)
-        disable_system_service;;
-
-        set_sshd_config)
-        set_sshd_config;;
-
-        disable_ipv6)
-        disable_ipv6;;
-
-        set_system_limits)
-        set_system_limits;;
-
-        update_kernel_parameter)
-        update_kernel_parameter;;
-
-        install_openjdk)
-        install_openjdk;;
-
-        install_oraclejdk)
-        install_oraclejdk;;
-
-        install_maven)
-        install_maven;;
-
-        install_php)
-        install_php;;
-
-        install_nodejs)
-        install_nodejs;;
-
-        install_mysql)
-        install_mysql;;
-        esac
-    done
-fi
