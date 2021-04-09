@@ -7,9 +7,6 @@
 #  $Create_data:    20190702
 #  $Description: CentOS 7.x system configure initial scripts
 #################################################
-IPS=''
-CURRENT_PWD=$(pwd)
-
 
 # check user is root
 if [ $(id -u) != "0" ]; then
@@ -23,6 +20,28 @@ if ping -c2 baidu.com &>/dev/null ;then
 else
     echo "当前机器网络不通，本脚本需要联网执行。"
     exit 2
+fi
+
+# check network_interface is eth0
+if ifconfig | grep eth0 ;then
+    echo
+else
+    echo "当前机器没有 eth0 网卡，请检查."
+    exit 3
+fi
+
+
+
+
+# PSF
+IPS=''
+CURRENT_PWD=$(pwd)
+NET_IP=$(ifconfig eth0  |  grep  -w "inet" | awk '{print $2}')
+
+
+
+
+
 
 
 # set format
@@ -37,6 +56,7 @@ update_yum_repo(){
     echo "开始更新系统 yum 仓库......"
     yum install epel-release -y
     yum install https://centos7.iuscommunity.org/ius-release.rpm  -y
+    yum install http://rpms.remirepo.net/enterprise/remi-release-7.rpm
     yum clean all
     yum makecache
     yum  update --skip-broken  -y
@@ -52,10 +72,18 @@ install_basic_package(){
     yum install -y  \
 wget \
 openssl-devel  \
-gcc \
-gcc-c++  \
-ntpdate \
+cpp \
+binutils  \
+gcc  \
 make \
+gcc-c++  \
+glibc  \
+glibc-kernheaders  \
+glibc-common  \
+glibc-devel  \
+libstdc++-devel \
+tcl \
+ntpdate \
 gcc-c++  \
 ncurses* \
 net-snmp \
@@ -86,7 +114,12 @@ atop  \
 expect  \
 dos2unix  \
 unzip \
-vim
+vim  \
+jq   \
+cronolog  \
+zlib*  \
+openssl*
+
 
     format
     sleep 3
@@ -131,11 +164,10 @@ while :
     done
     format
     # add hosts record.
-    net_ip=$(ifconfig eth0  |  grep  -w "inet" | awk '{print $2}')
-    if [ -n $net_ip ];then
-        echo "本机 eth0 网卡 ip 为： $net_ip "
-        echo "$net_ip $nodename"
-        echo "$net_ip $nodename" >> /etc/hosts
+    if [ -n $NET_IP ];then
+        echo "本机 eth0 网卡 ip 为： $NET_IP "
+        echo "$NET_IP $nodename"
+        echo "$NET_IP $nodename" >> /etc/hosts
         echo "添加主机名的解析记录OK"
     else
         echo "没有获取到有效的ip 地址，是确认网卡名称是否是 eth0"
@@ -461,7 +493,7 @@ install_maven(){
 
 
 # install php
-function install_php(){
+install_php(){
     yum install php72u* nginx httpd -y
     systemctl start php-fpm.service
     systemctl enable php-fpm.service
@@ -471,7 +503,7 @@ function install_php(){
 
 install_nodejs(){
     yum install https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm -y
-    cat > /etc/yum.repos.d/nodesource-el7.repo <<- "EOF"
+    cat > /etc/yum.repos.d/nodesource-el7.repo <<EOF
 [nodesource]
 name=Node.js Packages for Enterprise Linux 7 - $basearch
 baseurl=https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/$basearch
@@ -644,6 +676,175 @@ Confirm new password: 重复输入要设置的 root 密码 "
 }
 
 
+# install redis and  configure
+instal_redis(){
+    format
+    echo   -e  "开始安装 redis，目前仅支持安装各主版本的最新次版本，对应如下:
+3  --> 3.2.9
+4  --> 4.0.9
+5  --> 5.0.9
+6  --> 6.0.9
+62 --> 6.2.1
+
+务必阅读以下安装说明！！！:
+> 本安装脚本为源码编译安装，执行前请先执行 install_basic_package，安装软件包。
+> 编译目录默认在/usr/local/redis目录下，可以在脚本中修改，最后安装命令在在/usr/local/bin 目录下
+> redis 默认是用 root 用户启动
+> 配置文件放在/etc/redis/redis.conf，备份配置文件为redis.conf.bak
+> 日志文件会放在 /var/log/redis.log，需要提前创建
+> 默认开启AOF，aof 和 dump文件默认会放在 /var/lib/redisdata目录下，请在脚本中修改说那个 dir
+> 当 redis 开启的密码后，关闭 redis 使用 -a 进行输入密码，修改密码后需要更新 service 文件。
+"
+    which redis-cli 2&>1 /dev/null
+    if [[ $? -eq 0 ]];then
+        "redis 已存在，请确认，脚本先退出。"
+        exit  30
+    fi
+    read -p "请输入你想安装的 redis 主版本[3/4/5/6/62]: [ " redis_version
+    read -p "请输入你想设置的 redis 密码: [ "  redis_pass
+
+    case ${redis_version} in
+        3)
+        redis_version_full="3.2.9"
+       ;;
+        4)
+        redis_version_full="4.0.9"
+        ;;
+        5)
+        redis_version_full="5.0.9"
+        ;;
+        6)
+        redis_version_full="6.0.9"
+        ;;
+        62)
+        redis_version_full="6.2.1"
+        ;;
+    esac
+
+    echo "你想安装 redis 版本为 $redis_version_full  设置的密码为： $redis_pass 开始安装......"
+    sleep 3
+    wget  https://download.redis.io/releases/redis-$redis_version_full.tar.gz
+    tar zxf redis-$redis_version_full.tar.gz  -C /usr/local/
+    cd /usr/local/redis-$redis_version_full
+    cd deps
+    make jemalloc
+    make hiredis
+    make linenoise
+    make lua
+    sleep 5
+    cd ../
+    format
+    make
+    format
+    sleep 5
+    make test
+    format
+    sleep 5
+    if [[ $? == 0 ]];then
+       make install
+       format
+       sleep 5
+#       make install PREFIX=/usr/local
+       if [[ $? == 0 ]];then
+            redis-cli  --version
+            if [[ $? == 0 ]];then
+                echo "redis-$redis_version_full 安装成功"
+                sleep 5
+            fi
+       fi
+    fi
+
+    echo "开始修改redis.conf 配置文件...."
+    format
+    sleep 5
+    echo "65535"  > /proc/sys/net/core/somaxconn
+    if [ ! -d "/etc/redis" ];then
+        mkdir /etc/redis
+    fi
+    if [ ! -d "/var/lib/redisdata" ];then
+        mkdir /var/lib/redisdata
+    fi
+    echo "65535"  >  /proc/sys/net/core/somaxconn
+    echo "never" > /sys/kernel/mm/transparent_hugepage/enabled
+    echo "echo never > /sys/kernel/mm/transparent_hugepage/enabled"   >> /etc/rc.local
+
+    mv redis.conf redis.conf.bak
+    echo "bind 0.0.0.0" >> redis.conf
+    echo "port 6379" >> redis.conf
+    echo "tcp-backlog 65535" >> redis.conf
+    echo "tcp-keepalive 300" >> redis.conf
+    echo "daemonize yes" >> redis.conf
+    echo "pidfile /var/run/redis_6379.pid" >> redis.conf
+    echo "loglevel notice" >> redis.conf
+    echo 'logfile "/var/log/redis.log"' >> redis.conf
+    echo "databases 16" >> redis.conf
+    echo "always-show-logo yes" >> redis.conf
+    echo "save 900 1" >> redis.conf
+    echo "save 300 10" >> redis.conf
+    echo "save 60 10000" >> redis.conf
+    echo "stop-writes-on-bgsave-error yes" >> redis.conf
+    echo "rdbcompression yes" >> redis.conf
+    echo "rdbchecksum yes" >> redis.conf
+    echo "dbfilename dump.rdb" >> redis.conf
+    echo "dir /var/lib/redisdata" >> redis.conf
+    echo "appendonly yes" >> redis.conf
+    echo 'appendfilename "appendonly.aof"' >> redis.conf
+    echo "appendfsync everysec" >> redis.conf
+    echo "no-appendfsync-on-rewrite no" >> redis.conf
+    echo "auto-aof-rewrite-percentage 100b" >> redis.conf
+    echo "auto-aof-rewrite-min-size 64mb" >> redis.conf
+    echo "aof-load-truncated yes" >> redis.conf
+    echo "aof-use-rdb-preamble yes" >> redis.conf
+    echo "slowlog-log-slower-than 10000" >> redis.conf
+    echo "slowlog-max-len 128" >> redis.conf
+    echo "latency-monitor-threshold 0" >> redis.conf
+    echo "requirepass $redis_pass" >> redis.conf
+    echo "protected-mode no" >> redis.conf
+
+    cp redis.conf  redis.conf.bak  /etc/redis/
+
+    cat > /usr/lib/systemd/system/redis.service <<-EOF
+[Unit]
+Description=Redis persistent key-value database
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=forking
+User=root
+Group=root
+PrivateTmp=yes
+Restart=on-failure
+ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf
+ExecStop=/usr/local/bin/redis-cli -h 127.0.0.1 -p 6379 -a $redis_pass shutdown
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+    systemctl start redis
+    echo "redis已安装完成并启动......"
+    format
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 # main 函数
 main(){
@@ -761,4 +962,202 @@ if [[ $# -ge 1 ]]; then
     done
 fi
 
+    echo "65535"  > /proc/sys/net/core/somaxconn
+    if [ ! -d "/etc/redis" ];then
+        mkdir /etc/redis
+    fi
+    if [ ! -d "/var/lib/redisdata" ];then
+        mkdir /var/lib/redisdata
+    fi
 
+    mv redis.conf redis.conf.bak
+    echo "bind 0.0.0.0" >> redis.conf
+    echo "port 6379" >> redis.conf
+    echo "tcp-backlog 65535" >> redis.conf
+    echo "tcp-keepalive 300" >> redis.conf
+    echo "daemonize yes" >> redis.conf
+    echo "pidfile /var/run/redis_6379.pid" >> redis.conf
+    echo "loglevel notice" >> redis.conf
+    echo 'logfile "/var/log/redis.log"' >> redis.conf
+    echo "databases 16" >> redis.conf
+    echo "always-show-logo yes" >> redis.conf
+    echo "save 900 1" >> redis.conf
+    echo "save 300 10" >> redis.conf
+    echo "save 60 10000" >> redis.conf
+    echo "stop-writes-on-bgsave-error yes" >> redis.conf
+    echo "rdbcompression yes" >> redis.conf
+    echo "rdbchecksum yes" >> redis.conf
+    echo "dbfilename dump.rdb" >> redis.conf
+    echo "dir /var/lib/redisdata" >> redis.conf
+    echo "appendonly yes" >> redis.conf
+    echo 'appendfilename "appendonly.aof"' >> redis.conf
+    echo "appendfsync everysec" >> redis.conf
+    echo "no-appendfsync-on-rewrite no" >> redis.conf
+    echo "auto-aof-rewrite-percentage 100b" >> redis.conf
+    echo "auto-aof-rewrite-min-size 64mb" >> redis.conf
+    echo "aof-load-truncated yes" >> redis.conf
+    echo "aof-use-rdb-preamble yes" >> redis.conf
+    echo "slowlog-log-slower-than 10000" >> redis.conf
+    echo "slowlog-max-len 128" >> redis.conf
+    echo "latency-monitor-threshold 0" >> redis.conf
+    echo "requirepass $redis_pass" >> redis.conf
+    echo "protected-mode no" >> redis.conf
+    echo "" >> redis.conf
+
+    cp redis.conf  redis.conf.bak  /etc/redis/
+
+    cat > /usr/lib/systemd/system/redis.service <<-EOF
+[Unit]
+Description=Redis persistent key-value database
+After=network.target
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=root
+Group=root
+PrivateTmp=yes
+Restart=on-failure
+ExecStart=/usr/local/bin/redis-server /etc/redis/redis.conf
+ExecStop=/usr/local/bin/redis-cli -h 127.0.0.1 -p 6379 -a $redis_pass shutdown
+
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    systemctl daemon-reload
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# main 函数
+main(){
+    add_hosts
+    update_yum_repo
+    install_basic_package
+    set_machine_hostname
+    add_user
+    #update_kernel
+    update_ntpdate
+    #add_public_dns
+    disable_firewalld
+    set_history
+    disable_system_service
+    set_sshd_config
+    disable_ipv6
+    set_system_limits
+    update_kernel_parameter
+#    install_openjdk
+    install_oraclejdk
+    #install_maven
+    #install_php
+    #install_nodejs
+    #install_mysql
+#    set_lock_keyfile
+
+}
+
+
+# exec scripts
+echo "本脚本执行两种执行方式：\n
+1、(默认执行方式)将需要执行的函数写入 main 函数内，然后执行此脚本，不要加任何参数！\n
+2、执行本脚本加上需要执行的函数作为参数。"
+format
+sleep 3
+
+if [[ -z $* ]]; then
+    echo  "开始执行 main 函数进行系统初始化....."
+    format
+    sleep 5
+    main
+    format
+    echo "脚本执行完成，请重启机器"
+fi
+
+if [[ $# -ge 1 ]]; then
+    for arg in $* ; do
+        case ${arg} in
+        add_hosts)
+        add_hosts;;
+
+        update_yum_repo)
+        update_yum_repo;;
+
+        install_basic_package)
+        install_basic_package;;
+
+        set_machine_hostname)
+        set_machine_hostname;;
+
+        add_user)
+        add_user;;
+
+        update_kernel)
+        update_kernel;;
+
+        update_ntpdate)
+        update_ntpdate;;
+
+        add_public_dns)
+        add_public_dns;;
+
+        disable_firewalld)
+        disable_firewalld;;
+
+        set_history)
+        set_history;;
+
+        set_lock_keyfile)
+        set_lock_keyfile;;
+
+        disable_system_service)
+        disable_system_service;;
+
+        set_sshd_config)
+        set_sshd_config;;
+
+        disable_ipv6)
+        disable_ipv6;;
+
+        set_system_limits)
+        set_system_limits;;
+
+        update_kernel_parameter)
+        update_kernel_parameter;;
+
+        install_openjdk)
+        install_openjdk;;
+
+        install_oraclejdk)
+        install_oraclejdk;;
+
+        install_maven)
+        install_maven;;
+
+        install_php)
+        install_php;;
+
+        install_nodejs)
+        install_nodejs;;
+
+        install_mysql)
+        install_mysql;;
+        esac
+    done
+fi
