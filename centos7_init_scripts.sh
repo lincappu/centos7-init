@@ -453,7 +453,7 @@ install_oraclejdk(){
     cd /opt
     ln -s jdk1.8.0_202  jdk
     cat /dev/null  > /etc/profile.d/jdk.sh
-    echo '#jdk plugin'  >> /etc/profile.d/jdk.sh
+    echo '#jdk plugin profile'  >> /etc/profile.d/jdk.sh
     echo 'export JAVA_HOME=/opt/jdk'  >> /etc/profile.d/jdk.sh
     echo 'export JRE_HOME=/opt/jdk/jre'  >> /etc/profile.d/jdk.sh
     echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
@@ -676,9 +676,9 @@ Confirm new password: 重复输入要设置的 root 密码 "
 
 
 # install redis and  configure
-instal_redis(){
+install_redis(){
     format
-    echo   -e  "开始安装 redis，目前仅支持安装各主版本的最新次版本，对应如下:
+    echo -e "开始安装 redis，目前仅支持安装各主版本的最新次版本，对应如下:
 3  --> 3.2.9
 4  --> 4.0.9
 5  --> 5.0.9
@@ -694,13 +694,18 @@ instal_redis(){
 > 默认开启AOF，aof 和 dump文件默认会放在 /var/lib/redisdata目录下，请在脚本中修改说那个 dir
 > 当 redis 开启的密码后，关闭 redis 使用 -a 进行输入密码，修改密码后需要更新 service 文件。
 "
-    which redis-cli 2&>1 /dev/null
+
+    REDIS_CONF_DIR="/etc/redis"
+    REDIS_DATA_DIR="/var/lib/redisdata"
+
+
+    which redis-cli 2>&1 > /dev/null
     if [[ $? -eq 0 ]];then
         "redis 已存在，请确认，脚本先退出。"
         exit  30
     fi
     read -p "请输入你想安装的 redis 主版本[3/4/5/6/62]: [ " redis_version
-    read -p "请输入你想设置的 redis 密码: [ "  redis_pass
+    read -p "请输入你想设置的 redis 密码: [ " redis_pass
 
     case ${redis_version} in
         3)
@@ -757,11 +762,11 @@ instal_redis(){
     format
     sleep 5
     echo "65535"  > /proc/sys/net/core/somaxconn
-    if [ ! -d "/etc/redis" ];then
-        mkdir /etc/redis
+    if [ ! -d "${REDIS_CONF_DIR}" ];then
+        mkdir ${REDIS_CONF_DIR}
     fi
-    if [ ! -d "/var/lib/redisdata" ];then
-        mkdir /var/lib/redisdata
+    if [ ! -d "${REDIS_DATA_DIR}" ];then
+        mkdir ${REDIS_DATA_DIR}
     fi
     echo "65535"  >  /proc/sys/net/core/somaxconn
     echo "never" > /sys/kernel/mm/transparent_hugepage/enabled
@@ -830,6 +835,122 @@ EOF
 }
 
 
+install_zookeeper(){
+    format
+    echo "安装请 zookeeper 约则：
+> 请先确认系统是否有java 环境.
+> 请务必现在配置中完善 server 信息，并严格按照顺序进行安装执行顺序。
+> 启动是以zookeeper 用户来启动的.
+"
+
+    # 检测 java 环境是否存在
+    which java 2>&1  > /dev/null
+    if [[ $? -ne 0 ]];then
+        echo "目前系统没有java 环境，请先安装 java 环境"
+        exit  31
+    fi
+
+    useradd zookeeper
+    # 检测目录是否存在
+    ZOOK_INSTALL_DIR="/usr/local"
+    ZOOK_DATA_DIR='/var/lib/zookeeper_data'
+    ZOOK_LOG_DIR='/var/log/zookeeper_logs'
+
+    for dir in {$ZOOK_DATA_DIR,$ZOOK_LOG_DIR}
+        do
+            if [ ! -d "${dir}" ];then
+                mkdir -p  ${dir}
+                chown -R  zookeeper:zookeeper  ${dir}
+
+            fi
+        done
+
+
+    read -p  "请输入此台机器在 zook 集群的编号，请严格按照 server.id 的顺序进行设置 [ " zook_id
+    echo $zook_id | grep -q '[^0-9]'
+    n1=$?
+    if [ $n1 -eq 0 ]
+    then
+            echo "你输入id 编号不是数字，请执行程序重新输入。"
+            exit 32
+    fi
+
+    wget https://mirrors.tuna.tsinghua.edu.cn/apache/zookeeper/stable/apache-zookeeper-3.6.3-bin.tar.gz
+    tar zxf apache-zookeeper-3.6.3-bin.tar.gz -C  $ZOOK_INSTALL_DIR
+    ln -s $ZOOK_INSTALL_DIR/apache-zookeeper-3.6.3-bin   $ZOOK_INSTALL_DIR/zookeeper
+    chown -R  zookeeper:zookeeper  $ZOOK_INSTALL_DIR/apache-zookeeper-3.6.3-bin
+    chown -R  zookeeper:zookeeper $ZOOK_INSTALL_DIR/zookeeper
+
+    cat > $ZOOK_INSTALL_DIR/zookeeper/conf/zoo.cfg <<-EOF
+
+tickTime=2000
+initLimit=10
+syncLimit=5
+maxClientCnxns=200
+dataDir=$ZOOK_DATA_DIR
+dataLogDir=$ZOOK_LOG_DIR
+autopurge.snapRetainCount=5
+autopurge.purgeInterval=1
+clientPort=2181
+server.1=172.16.1.146:2888:3888
+server.2=172.16.1.147:2888:3888
+server.3=172.16.1.145:2888:3888
+server.4=172.16.1.142:2888:3888
+server.5=172.16.1.143:2888:3888
+EOF
+
+    echo "#zookeeper plugin profile"   >> /etc/profile.d/zookeeper.sh
+    echo "export ZOOKEEPER_HOME=$ZOOK_INSTALL_DIR/zookeeper" >> /etc/profile.d/zookeeper.sh
+    echo "export PATH=$PATH:$ZOOKEEPER_HOME/bin"  >> /etc/profile.d/zookeeper.sh
+    source  /etc/profile.d/zookeeper.sh
+
+
+    cat > /usr/lib/systemd/system/zookeeper.service <<-EOF
+[Unit]
+Description=Apache Zookeeper server
+Documentation=http://zookeeper.apache.org
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=forking
+User=zookeeper
+Group=zookeeper
+PIDFile=$ZOOK_DATA_DIR/zookeeper_server.pid
+ExecStart=$ZOOK_INSTALL_DIR/zookeeper/bin/zkServer.sh start
+ExecStop=$ZOOK_INSTALL_DIR/zookeeper/bin/zkServer.sh stop
+ExecReload=$ZOOK_INSTALL_DIR/zookeeper/bin/zkServer.sh restart
+SyslogIdentifier=zookeeper
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    format
+    echo "$zook_id" > $ZOOK_DATA_DIR/myid
+    chown -R  zookeeper:zookeeper  $ZOOK_DATA_DIR/myid
+    echo "id 文件内容如下："
+    cat  $ZOOK_DATA_DIR/myid
+    format
+    echo "zookeeper 配置文件如下："
+    cat $ZOOK_INSTALL_DIR/zookeeper/conf/zoo.cfg
+    format
+    echo "zookeeper.service文件如下："
+    cat /usr/lib/systemd/system/zookeeper.service
+    format
+    echo "zookeeper profile文件如下："
+    cat /etc/profile.d/zookeeper.sh
+    format
+
+    systemctl daemon-reload
+    systemctl start zookeeper
+    systemctl status zookeeper
+    echo "zookeeper已安装完成......"
+    format
+
+}
+
 
 
 # main 函数
@@ -856,6 +977,7 @@ main(){
     #install_nodejs
     #install_mysql
     #instal_redis
+    #install_zookeeper
 #    set_lock_keyfile
 
 }
@@ -946,8 +1068,11 @@ if [[ $# -ge 1 ]]; then
         install_mysql)
         install_mysql
         ;;
-        instal_redis)
-        instal_redis
+        install_redis)
+        install_redis
+        ;;
+        install_zookeeper)
+        install_zookeeper
         ;;
 
         esac
