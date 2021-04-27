@@ -628,6 +628,7 @@ Confirm new password: 重复输入要设置的 root 密码 "
             mysql -uroot -p"${pass}" -e "set global validate_password_mixed_case_count=0;" --connect-expired-password
             mysql -uroot -p"${pass}" -e "set global validate_password_number_count=0;" --connect-expired-password
             read -p "请输入 mysql root 密码：" mysql_root_pass
+            mysql -uroot -p"${pass}" -e "alter user 'root'@'localhost' identified by '${mysql_root_pass}' PASSWORD EXPIRE NEVER account unlock;" --connect-expired-password
             mysql -uroot -p"${mysql_root_pass}" -e "update mysql.user set host='%' where user='root';" --connect-expired-password
             mysql -uroot -p"${mysql_root_pass}" -e "flush privileges;" --connect-expired-password
             echo "mysql root 密码设置及授权完成,root 用户授权规则如下："
@@ -635,6 +636,13 @@ Confirm new password: 重复输入要设置的 root 密码 "
             format
             mysql -uroot -p"${mysql_root_pass}" -e "show grants for 'root'@'%';"
             format
+            
+            # 创建用户及授权命令：
+            # CREATE USER '用户名'@'登录地址（%百分号代表所有）' IDENTIFIED BY '密码'
+            # GRANT SELECT, INSERT ON 数据库名.* TO '用户名'@'%';
+          
+            
+            
         fi
 
     elif [[ "$mysql_version" == "80" ]];then
