@@ -854,9 +854,8 @@ install_zookeeper(){
     # 检测目录是否存在
     ZOOK_INSTALL_DIR="/usr/local"
     ZOOK_DATA_DIR='/var/lib/zookeeper_data'
-    ZOOK_LOG_DIR='/var/log/zookeeper_logs'
 
-    for dir in {$ZOOK_DATA_DIR,$ZOOK_LOG_DIR}
+    for dir in {$ZOOK_DATA_DIR}
         do
             if [ ! -d "${dir}" ];then
                 mkdir -p  ${dir}
@@ -865,7 +864,16 @@ install_zookeeper(){
             fi
         done
 
-
+    format
+    echo "此机器的 ip 地址是: $NET_IP"
+    ehco "server_id 对应的 ip 为：
+server.1=172.16.1.146:2888:3888:participant;172.16.1.146:2181
+server.2=172.16.1.147:2888:3888:participant;172.16.1.147:2181
+server.3=172.16.1.145:2888:3888:participant;172.16.1.145:2181
+server.4=172.16.1.142:2888:3888:participant;172.16.1.142:2181
+server.5=172.16.1.143:2888:3888:participant;172.16.1.136:2181
+"
+    format
     read -p  "请输入此台机器在 zook 集群的编号，请严格按照 server.id 的顺序进行设置 [ " zook_id
     echo $zook_id | grep -q '[^0-9]'
     n1=$?
@@ -882,21 +890,20 @@ install_zookeeper(){
     chown -R  zookeeper:zookeeper $ZOOK_INSTALL_DIR/zookeeper
 
     cat > $ZOOK_INSTALL_DIR/zookeeper/conf/zoo.cfg <<-EOF
-
 tickTime=2000
 initLimit=10
 syncLimit=5
 maxClientCnxns=200
 dataDir=$ZOOK_DATA_DIR
-dataLogDir=$ZOOK_LOG_DIR
 autopurge.snapRetainCount=5
 autopurge.purgeInterval=1
+4lw.commands.whitelist=*
 clientPort=2181
-server.1=172.16.1.146:2888:3888
-server.2=172.16.1.147:2888:3888
-server.3=172.16.1.145:2888:3888
-server.4=172.16.1.142:2888:3888
-server.5=172.16.1.143:2888:3888
+server.1=172.16.1.146:2888:3888:participant;172.16.1.146:2181
+server.2=172.16.1.147:2888:3888:participant;172.16.1.147:2181
+server.3=172.16.1.145:2888:3888:participant;172.16.1.145:2181
+server.4=172.16.1.142:2888:3888:participant;172.16.1.142:2181
+server.5=172.16.1.143:2888:3888:participant;172.16.1.136:2181
 EOF
 
     echo "#zookeeper plugin profile"   >> /etc/profile.d/zookeeper.sh
