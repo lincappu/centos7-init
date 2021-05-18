@@ -37,7 +37,6 @@ CURRENT_PWD=$(pwd)
 NET_IP=$(ifconfig eth0  |  grep  -w "inet" | awk '{print $2}')
 
 
-
 # set format
 format() {
 #    echo -e "\033[32m Success!!!\033[0m\n"
