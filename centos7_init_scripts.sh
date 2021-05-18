@@ -799,7 +799,7 @@ install_redis(){
     echo 'appendfilename "appendonly.aof"' >> redis.conf
     echo "appendfsync everysec" >> redis.conf
     echo "no-appendfsync-on-rewrite no" >> redis.conf
-    echo "auto-aof-rewrite-percentage 100b" >> redis.conf
+    echo "auto-aof-rewrite-percentage 100" >> redis.conf
     echo "auto-aof-rewrite-min-size 64mb" >> redis.conf
     echo "aof-load-truncated yes" >> redis.conf
     echo "aof-use-rdb-preamble yes" >> redis.conf
