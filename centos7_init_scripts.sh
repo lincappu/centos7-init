@@ -809,7 +809,7 @@ install_redis(){
     echo "aof-load-truncated yes" >> redis.conf
     echo "aof-use-rdb-preamble yes" >> redis.conf
     echo "slowlog-log-slower-than 10000" >> redis.conf
-    echo "slowlog-max-len 128" >> redis.conf
+    echo "slowlog-max-len 10000" >> redis.conf
     echo "latency-monitor-threshold 0" >> redis.conf
     echo "requirepass $redis_pass" >> redis.conf
     echo "protected-mode no" >> redis.conf
