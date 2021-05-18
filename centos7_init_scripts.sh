@@ -676,8 +676,9 @@ Confirm new password: 重复输入要设置的 root 密码 "
             mysql -uroot -p"${mysql_root_pass}" -e "show grants for 'root'@'%';"
         fi
     fi
-    
-
+    sleep 3
+    echo  "开始测试 mysql root 登陆"
+    mysql -uroot -p
     format
     sleep 3
 }
