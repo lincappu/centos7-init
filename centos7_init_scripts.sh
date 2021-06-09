@@ -43,6 +43,16 @@ format() {
     echo "#########################################################"
 }
 
+# set vimrc
+set_vimrc() {
+    if [[ -f "/etc/vimrc" ]];then
+        echo "" >> /etc/vimrc
+        echo "set ts=4"  >> /etc/vimrc
+        echo "set expandtab" >> /etc/vimrc
+        echo "set autoindent" >> /etc/vimrc
+        echo "set nu" >> /etc/vimrc
+}
+
 
 # install epel repo and updte yum repo.
 update_yum_repo(){
@@ -56,8 +66,6 @@ update_yum_repo(){
     format
     sleep 3
 }
-
-
 
 # install basic package.
 install_basic_package(){
@@ -1080,6 +1088,7 @@ EOF
 
 # main 函数
 main(){
+    set_vimrc
     add_hosts
     update_yum_repo
     install_basic_package
@@ -1129,6 +1138,9 @@ if [[ $# -ge 1 ]]; then
         case ${arg} in
         add_hosts)
         add_hosts
+        ;;
+        set_vimrc)
+        set_vimrc
         ;;
         update_yum_repo)
         update_yum_repo
