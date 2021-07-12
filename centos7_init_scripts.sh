@@ -51,6 +51,7 @@ set_vimrc() {
         echo "set expandtab" >> /etc/vimrc
         echo "set autoindent" >> /etc/vimrc
         echo "set nu" >> /etc/vimrc
+    fi
 }
 
 
