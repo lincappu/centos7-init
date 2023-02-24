@@ -505,23 +505,11 @@ install_php(){
 
 
 install_nodejs(){
-    yum install https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/x86_64/nodesource-release-el7-1.noarch.rpm -y
-    cat > /etc/yum.repos.d/nodesource-el7.repo <<EOF
-[nodesource]
-name=Node.js Packages for Enterprise Linux 7 - $basearch
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/$basearch
-enabled=1
-gpgcheck=0
-
-[nodesource-source]
-name=Node.js for Enterprise Linux 7 - $basearch - Source
-baseurl=https://mirrors.tuna.tsinghua.edu.cn/nodesource/rpm_12.x/el/7/SRPMS
-enabled=0
-gpgcheck=1
-EOF
-
+    curl -sL https://rpm.nodesource.com/setup_16.x | bash -
     yum makecache
-    yum install nodejs -y
+    yum install -y nodejs
+    npm version 
+
 
     npm config set registry https://registry.npm.taobao.org/
     npm config set sass_binary_site https://npm.taobao.org/mirrors/node-sass/
@@ -533,8 +521,6 @@ EOF
     export NODE_MIRROR=https://npm.taobao.org/mirrors/node/
     echo "export NODE_MIRROR=https://npm.taobao.org/mirrors/node/" >> /etc/profile
     source /etc/profile
-    n latest
-    n stable
 
     format
     sleep 3
