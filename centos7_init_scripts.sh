@@ -463,7 +463,11 @@ install_oraclejdk(){
     echo 'export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar:$JRE_HOME/lib'  >> /etc/profile.d/jdk.sh
     echo 'export PATH=$JAVA_HOME/bin:$JRE_HOME/bin:$PATH'  >> /etc/profile.d/jdk.sh
     source /etc/profile.d/jdk.sh
-    ln -s  /opt/jdk/bin/java   /usr/bin/java
+    if [ -f "/usr/bin/java" ];then
+        mv -f /usr/bin/java /tmp
+    else:
+        ln -s  /opt/jdk/bin/java   /usr/bin/java
+    fi
     which java
     java -version
     cd ${CURRENT_PWD}
